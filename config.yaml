@@ -1,0 +1,33 @@
+# Configuration for parsing hook input data
+
+# Top-level fields to keep (fields not present are skipped)
+fields:
+  - timestamp
+  - cwd
+  - prompt
+  - tool
+  - args
+
+# Tool argument fields to keep (others will be filtered out)
+tool_arg_fields:
+  - command
+  - pattern
+  - path
+  - filePath ## will be converted to "path"
+  - query
+  - intent
+
+# Configuration for tool use evaluation (grouping into categories)
+
+command_tools:
+  - run_in_terminal
+  - run_notebook_cell
+
+editing_tools:
+  - replace_string_in_file
+  - multi_replace_string_in_file
+  - create_file
+
+reading_tools:
+  - read_file
+  - grep_search

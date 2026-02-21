@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "hooks": {
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "cat >> .agent-history.jsonl; echo '' >> .agent-history.jsonl"
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "cat >> .agent-history.jsonl; echo '' >> .agent-history.jsonl"
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+# Denied patterns use partial matching, so "rm -rf" will match "echo test && rm -rf /tmp"
+deny_commands:
+  - pattern: ^pytest$
+    context: Running "pytest" is currently disabled. Use "pytest -v" to run tests. 
+  # - pattern: "rm -rf"
+  #   reason: "Destructive commands are not allowed"
+
+# Command patterns to allow (regex patterns, anchors ^ and $ are implied - exact match)
+allow_commands:
+  - pattern: pytest -v
+  # - pattern: "ls.*"
+  #   context: "Listing files is encouraged for better understanding"
+  # - pattern: "git status"
+  #   reason: "Safe read-only operation"
+  #   context: "Helps understand repository state"
+
+# Command patterns to confirm (regex patterns, anchors ^ and $ are implied - exact match)
+# confirm_commands:
+#   - pattern: "rm -rf.*"
+#     reason: "Destructive operation"
+#     context: "Please confirm you want to delete files"
+#   - pattern: "git push.*"
+#     reason: "Publishing changes"
+#     context: "Confirm you want to push to remote"
