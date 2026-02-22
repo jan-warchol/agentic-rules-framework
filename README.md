@@ -15,6 +15,19 @@ it will work like you want.
     Second, I want these rules to be defined in a visible place and in a plain,
     readable format, not hidden away in a json config somewhere.
 
+Basically, the agents need to know _why_ they shouldn't do some things. If they are
+simply forbidden something without an explanation, they will stubbornly try again
+and again, or find workarounds. When provided with the reason, they will actually
+be more compliant, as they will aim to follow the intent behind the rules. This could
+theoretically be accomplished with instructions in CLAUDE.md / AGENTS.md, but:
+- the rules must be deterministic, not subject to model's opinion
+- describing _all_ the rules in AGENTS would pollute the context unnecessarily.
+
+Also, rules defined in a visible place with clear purpose can be read and enacted
+by the agent, even without the hooks themselves (it's very common that agent reads
+`agent-rules.yaml` during a session and corrects its reasoning based on what is
+written there) .
+
 ## Features
 
 * allowing tools (regular expresion patterns)
