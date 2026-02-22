@@ -22,6 +22,11 @@ it will work like you want.
   has a tendency to create ad-hoc python scripts for testing (which results in frequent
   permission prompts), you can deny python usage with a comment "use pytest instead" -
   and it works!
+* denying editing specific paths **with explanation for the agent** - for example, if
+  there are files that shouldn't be modified without deep consideration, because they
+  are considered "source of truth" (e.g. interface definitions), you can mark them as
+  such (with an explanation so that the agent will understand that it needs to adapt
+  its strategy to these files).
 
 ## agent-rules.yaml
 
@@ -37,7 +42,6 @@ The [.github/hooks/hooks.json](.github/hooks/hooks.json) file defines hooks that
 
 ## Future roadmap
 
-- defining denied file paths (for files that the agent should leave alone)
 - defining post-tool hooks (run linter, tests and let the agent fix the code
   if needed)
 - integrating tools for code quality metrics (code duplication level, cognitive

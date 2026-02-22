@@ -1,5 +1,15 @@
 # Tool checking rules configuration
 
+# Paths that cannot be edited
+# Each entry has a path (can be just a filename or include directory)
+# Optional fields: reason (for permissionDecisionReason), context (for additionalContext)
+deny_edits:
+  - path: agent-rules.yaml
+    reason: Only human can edit the agent rules configuration to ensure safety and control.
+  - path: tests/test_command_permissions.py
+    reason: This file is frozen for edits.
+    context: Test cases in this file have been carefully validated. Allowing edits could compromise the integrity of the tests and lead to unreliable results.
+
 # Denied patterns use partial matching, so "rm -rf" will match "echo test && rm -rf /tmp"
 deny_commands:
   - pattern: "pytest .+"
