@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Unit tests for tool_check.py command checking logic using pytest."""
+"""Unit tests for agent_rules.py command checking logic using pytest."""
 
 import sys
 from pathlib import Path
 import pytest
 import json
 
-# Add parent directory to path to import tool_check
+# Add parent directory to path to import agent_rules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from tool_check import check_command, process_command_tool
+from agent_rules import check_command, process_command_tool
 
 
 class TestDeniedCommands:
@@ -32,7 +32,7 @@ class TestDeniedCommands:
 
         status, details = check_command("rm -rf /tmp", rules)
 
-        assert status is None
+        assert status is None  # Not denied because pattern does not match exactly
         assert details == {}
 
     def test_denied_priority_over_allowed(self):

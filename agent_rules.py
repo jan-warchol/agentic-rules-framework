@@ -59,28 +59,6 @@ def load_rules(input_data):
         return yaml.safe_load(f)
 
 
-def check_forbidden_path(file_path, forbidden_list):
-    """Check if file path is forbidden. Returns (is_forbidden, details)."""
-    if not file_path:
-        return False, {}
-
-    path = Path(file_path)
-    for forbidden in forbidden_list:
-        forbidden_path = Path(forbidden["path"])
-        # Match if the file path ends with the forbidden path
-        if path.name == forbidden_path.name and (
-            len(forbidden_path.parts) == 1 or str(path).endswith(str(forbidden_path))
-        ):
-            details = {}
-            if "reason" in forbidden:
-                details["reason"] = forbidden["reason"]
-            if "context" in forbidden:
-                details["context"] = forbidden["context"]
-            return True, details
-
-    return False, {}
-
-
 def check_command(command, rules):
     """Check command against deny, allow, and confirm lists. Returns (status, details).
 

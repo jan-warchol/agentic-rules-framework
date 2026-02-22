@@ -1,4 +1,4 @@
-# Agent rules framework
+# Agentic rules framework
 
 Framework for defining tool use rules, file access rules, post-tool hooks etc.
 Because what matters today is the tooling around the agent, to guide it so that
@@ -23,7 +23,7 @@ it will work like you want.
   permission prompts), you can deny python usage with a comment "use pytest instead" -
   and it works!
 
-## AGENT_RULES.yaml
+## agent-rules.yaml
 
 This is where the rules should be defined. See the example file in this repo.
 
@@ -32,7 +32,7 @@ This is where the rules should be defined. See the example file in this repo.
 The [.github/hooks/hooks.json](.github/hooks/hooks.json) file defines hooks that:
 
 1. Log prompts and tool usage for further analysis
-2. Runs `tool_check.py` before tool usage to assess whether the tool should be
+2. Runs `agent_rules.py` before tool usage to assess whether the tool should be
    allowed, denied or confirmed with the user.
 
 ## Future roadmap

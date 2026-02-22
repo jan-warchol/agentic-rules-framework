@@ -13,7 +13,7 @@ tool_arg_fields:
   - command
   - pattern
   - path
-  - filePath ## will be converted to "path"
+  - filePath # will be converted to "path"
   - query
   - intent
 
@@ -21,13 +21,10 @@ tool_arg_fields:
 
 command_tools:
   - run_in_terminal
-  - run_notebook_cell
+  - run_notebook_cell # not sure about this one
 
 editing_tools:
   - replace_string_in_file
   - multi_replace_string_in_file
   - create_file
-
-reading_tools:
-  - read_file
-  - grep_search
+  - create_directory
