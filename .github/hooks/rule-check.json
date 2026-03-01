@@ -4,7 +4,7 @@
     "preToolUse": [
       {
         "type": "command",
-        "bash": "python3 agent_rules.py"
+        "bash": "python3 check_agent_rules.py"
       }
     ]
   }

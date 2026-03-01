@@ -50,7 +50,7 @@ This is where the rules should be defined. See the example file in this repo.
 Directory [.github/hooks](.github/hooks) contains hooks that:
 
 1. Log prompts and tool usage for further analysis
-2. Run `agent_rules.py` before tool usage to assess whether the tool should be
+2. Run `check_agent_rules.py` before tool usage to assess whether the tool should be
    allowed, denied or confirmed with the user.
 
 ## Future roadmap

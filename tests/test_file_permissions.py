@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for file edit permission checking in agent_rules.py."""
+"""Unit tests for file edit permission checking in check_agent_rules.py."""
 
 import sys
 from pathlib import Path
@@ -8,10 +8,10 @@ import json
 import tempfile
 import os
 
-# Add parent directory to path to import agent_rules
+# Add parent directory to path to import check_agent_rules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from agent_rules import check_path, process_editing_tool
+from check_agent_rules import check_path, process_editing_tool
 
 
 class TestDeniedPaths:
@@ -101,7 +101,7 @@ class TestDeniedPaths:
             base_dir = Path(tmpdir)
             
             tests_dir = base_dir / "tests"
-            test_file = tests_dir / "test_agent_rules.py"
+            test_file = tests_dir / "test_check_agent_rules.py"
             absolute_path = str(test_file.resolve())
             some_other_dir = base_dir / "other"
             

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Unit tests for agent_rules.py command checking logic using pytest."""
+"""Unit tests for check_agent_rules.py command checking logic using pytest."""
 
 import sys
 from pathlib import Path
 import pytest
 import json
 
-# Add parent directory to path to import agent_rules
+# Add parent directory to path to import check_agent_rules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from agent_rules import check_command, process_command_tool
+from check_agent_rules import check_command, process_command_tool
 
 
 class TestDeniedCommands:
