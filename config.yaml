@@ -14,6 +14,7 @@ tool_arg_fields:
   - pattern
   - path
   - filePath # will be converted to "path"
+  - file_path # used by claude code
   - query
   - intent
 
@@ -23,6 +24,7 @@ command_tools:
   - run_in_terminal
   - run_notebook_cell # not sure about this one
   - bash # copilot-cli
+  - Bash # claude-code
 
 editing_tools:
   - replace_string_in_file
@@ -31,3 +33,5 @@ editing_tools:
   - create_directory
   - edit   # copilot-cli
   - create # copilot-cli
+  - Edit   # claude-code
+  - Write  # claude-code

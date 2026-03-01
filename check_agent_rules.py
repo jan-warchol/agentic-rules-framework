@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 import yaml
-from convert import convert_tool_entry, detect_tool_format, VSCODE_COPILOT, COPILOT_CLI
+from convert import convert_tool_entry, detect_tool_format, VSCODE_COPILOT, COPILOT_CLI, CLAUDE_CODE
 
 # Load config (tools lists)
 config_path = Path(__file__).parent / "config.yaml"
@@ -23,7 +23,7 @@ def parse_args():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Hook to check tool usage and deny certain operations.")
     parser.add_argument("rules_path", nargs="?", help="Path to agent-rules.yaml (default: auto-detect from cwd)")
-    parser.add_argument("--tool", help="Tool format to use: 'vscode-copilot' or 'copilot-cli' (default: auto-detect)")
+    parser.add_argument("--tool", help="Tool format to use: 'claude-code', 'vscode-copilot' or 'copilot-cli' (default: auto-detect)")
     return parser.parse_args()
 
 
@@ -40,7 +40,7 @@ def get_tool_format(input_data, tool_arg=None):
         tool_arg: Value of the --tool CLI argument (or None)
 
     Returns:
-        Tool format string: 'vscode-copilot' or 'copilot-cli'
+        Tool format string: 'claude-code', 'vscode-copilot' or 'copilot-cli'
 
     Raises:
         ValueError: If format cannot be determined
@@ -218,7 +218,8 @@ def check_command(command, rules):
 
 def output_decision(decision, tool_format, reason=None, context=None):
     """Output a permission decision with optional reason and context."""
-    if tool_format == VSCODE_COPILOT:
+    if tool_format in (VSCODE_COPILOT, CLAUDE_CODE):
+        # Both VSCode Copilot and Claude Code use hookSpecificOutput format
         output = {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",

@@ -9,6 +9,7 @@ from conversion_utils import parse_timestamp, run_converter
 
 VSCODE_COPILOT = "vscode-copilot"
 COPILOT_CLI = "copilot-cli"
+CLAUDE_CODE = "claude-code"
 
 
 def detect_tool_format(entry):
@@ -17,10 +18,13 @@ def detect_tool_format(entry):
     Returns:
         'vscode-copilot' if the entry has hookEventName (vscode-copilot format)
         'copilot-cli' if the entry has toolName/toolArgs (copilot-cli format)
+        'claude-code' if the entry has hook_event_name (claude-code format)
         None if format cannot be determined
     """
     if "hookEventName" in entry:
         return VSCODE_COPILOT
+    if "hook_event_name" in entry:
+        return CLAUDE_CODE
     if "toolName" in entry:
         return COPILOT_CLI
     return None
@@ -39,9 +43,11 @@ def filter_args(args):
     if not isinstance(args, dict):
         return {}
     filtered = {k: v for k, v in args.items() if k in TOOL_ARG_FIELDS}
-    # Rename filePath to path
+    # Rename filePath to path (VScode Copilot) and file_path to path (Claude Code)
     if "filePath" in filtered:
         filtered["path"] = filtered.pop("filePath")
+    if "file_path" in filtered:
+        filtered["path"] = filtered.pop("file_path")
 
     # Special handling for replacements (multi_replace_string_in_file)
     if "replacements" in args and isinstance(args["replacements"], list):
@@ -62,7 +68,7 @@ def convert_tool_entry(entry, tool_format=None):
 
     Args:
         entry: Raw tool entry dict
-        tool_format: 'vscode-copilot' or 'copilot-cli'. Auto-detected if None.
+        tool_format: 'vscode-copilot', 'copilot-cli', or 'claude-code'. Auto-detected if None.
     """
     if tool_format is None:
         tool_format = detect_tool_format(entry)
@@ -71,7 +77,7 @@ def convert_tool_entry(entry, tool_format=None):
         tool_name = entry.get("toolName")
         args_raw = entry.get("toolArgs", "{}")
         args = json.loads(args_raw) if isinstance(args_raw, str) else args_raw
-    else:  # vscode-copilot (default)
+    else:  # vscode-copilot and claude-code both use tool_name and tool_input
         tool_name = entry.get("tool_name")
         args = entry.get("tool_input", {})
 
@@ -79,7 +85,8 @@ def convert_tool_entry(entry, tool_format=None):
     result = {}
     for field in FIELDS:
         if field == "timestamp":
-            result[field] = parse_timestamp(entry["timestamp"])
+            if "timestamp" in entry:
+                result[field] = parse_timestamp(entry["timestamp"])
         elif field == "tool":
             result[field] = tool_name
         elif field == "args":

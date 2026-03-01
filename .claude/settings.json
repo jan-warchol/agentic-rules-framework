@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat >> .agent-history.jsonl"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat >> .agent-history.jsonl"
+          },
+          {
+            "type": "command",
+            "command": "python3 check_agent_rules.py"
+          }
+        ]
+      }
+    ]
+  }
+}
