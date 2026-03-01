@@ -7,6 +7,24 @@ from pathlib import Path
 import yaml
 from conversion_utils import parse_timestamp, run_converter
 
+VSCODE_COPILOT = "vscode-copilot"
+COPILOT_CLI = "copilot-cli"
+
+
+def detect_tool_format(entry):
+    """Detect which tool produced the input data based on its fields.
+
+    Returns:
+        'vscode-copilot' if the entry has hookEventName (vscode-copilot format)
+        'copilot-cli' if the entry has toolName/toolArgs (copilot-cli format)
+        None if format cannot be determined
+    """
+    if "hookEventName" in entry:
+        return VSCODE_COPILOT
+    if "toolName" in entry:
+        return COPILOT_CLI
+    return None
+
 # Load configuration
 config_path = Path(__file__).parent / "config.yaml"
 with open(config_path) as f:
@@ -39,13 +57,23 @@ def filter_args(args):
     return filtered
 
 
-def convert_tool_entry(entry):
-    """Convert a single tool entry to simplified format."""
-    # Extract tool name
-    tool_name = entry.get("tool_name")
+def convert_tool_entry(entry, tool_format=None):
+    """Convert a single tool entry to simplified format.
 
-    # Extract tool arguments (Format 1)
-    args = entry.get("tool_input", {})
+    Args:
+        entry: Raw tool entry dict
+        tool_format: 'vscode-copilot' or 'copilot-cli'. Auto-detected if None.
+    """
+    if tool_format is None:
+        tool_format = detect_tool_format(entry)
+
+    if tool_format == COPILOT_CLI:
+        tool_name = entry.get("toolName")
+        args_raw = entry.get("toolArgs", "{}")
+        args = json.loads(args_raw) if isinstance(args_raw, str) else args_raw
+    else:  # vscode-copilot (default)
+        tool_name = entry.get("tool_name")
+        args = entry.get("tool_input", {})
 
     # Build result from configured fields
     result = {}
@@ -76,7 +104,7 @@ def convert_prompt_entry(entry):
 def convert_entry(entry):
     """Convert a single entry (auto-detect type: prompt or tool)."""
     # Detect entry type
-    if "tool_name" in entry:
+    if "tool_name" in entry or "toolName" in entry:
         return convert_tool_entry(entry)
     else:
         # Assume it's a prompt entry

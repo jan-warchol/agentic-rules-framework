@@ -7,14 +7,20 @@ deny_edits:
   - path: agent-rules.yaml
     reason: Only human can edit the agent rules configuration to ensure safety and control.
   - path: tests/test_command_permissions.py
-    reason: This file is frozen for edits.
-    context: Test cases in this file have been carefully validated. Allowing edits could compromise the integrity of the tests and lead to unreliable results.
+    reason: >
+      This file is frozen for edits. Test cases in this file have been carefully validated.
+      Allowing edits could compromise the integrity of the tests and lead to unreliable results.
 
 # Denied patterns use partial matching, so "rm -rf" will match "echo test && rm -rf /tmp"
 deny_commands:
   - pattern: "pytest .+"
-    reason: When running python tests, prefer running "pytest" without additional arguments.
-    context: It is impractical to list all allowed arguments that can be passed to pytest, and allowing arbitrary arguments can lead to unintended consequences.
+    reason: >
+      When running python tests, prefer running "pytest" without additional arguments.
+      It is impractical to list all allowed arguments that can be passed to pytest,
+      and allowing arbitrary arguments can lead to unintended consequences.
+  - pattern: "git commit"
+    reason: >
+      Committing changes should be done manually by a human to ensure proper review of changes.
   # - pattern: "rm -rf"
   #   reason: "Destructive commands are not allowed"
 

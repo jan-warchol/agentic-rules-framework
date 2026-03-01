@@ -22,9 +22,12 @@ tool_arg_fields:
 command_tools:
   - run_in_terminal
   - run_notebook_cell # not sure about this one
+  - bash # copilot-cli
 
 editing_tools:
   - replace_string_in_file
   - multi_replace_string_in_file
   - create_file
   - create_directory
+  - edit   # copilot-cli
+  - create # copilot-cli

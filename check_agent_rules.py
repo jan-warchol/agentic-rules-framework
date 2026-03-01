@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Hook to check tool usage and deny certain operations."""
 
+import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
 import yaml
-from convert import convert_tool_entry
+from convert import convert_tool_entry, detect_tool_format, VSCODE_COPILOT, COPILOT_CLI
 
 # Load config (tools lists)
 config_path = Path(__file__).parent / "config.yaml"
@@ -17,11 +19,49 @@ COMMAND_TOOLS = config.get("command_tools", [])
 EDITING_TOOLS = config.get("editing_tools", [])
 
 
-def load_rules(input_data):
+def parse_args():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description="Hook to check tool usage and deny certain operations.")
+    parser.add_argument("rules_path", nargs="?", help="Path to agent-rules.yaml (default: auto-detect from cwd)")
+    parser.add_argument("--tool", help="Tool format to use: 'vscode-copilot' or 'copilot-cli' (default: auto-detect)")
+    return parser.parse_args()
+
+
+def get_tool_format(input_data, tool_arg=None):
+    """Determine which tool format to use.
+
+    Priority order:
+      1. AGENT_RULES_TOOL environment variable
+      2. --tool CLI argument
+      3. Auto-detection from input data fields
+
+    Args:
+        input_data: Raw input JSON data
+        tool_arg: Value of the --tool CLI argument (or None)
+
+    Returns:
+        Tool format string: 'vscode-copilot' or 'copilot-cli'
+
+    Raises:
+        ValueError: If format cannot be determined
+    """
+    env_tool = os.environ.get("AGENT_RULES_TOOL")
+    if env_tool:
+        return env_tool
+    if tool_arg:
+        return tool_arg
+    detected = detect_tool_format(input_data)
+    if detected is None:
+        raise ValueError("Cannot detect tool format from input; use --tool or AGENT_RULES_TOOL")
+    return detected
+
+
+def load_rules(input_data, rules_path_arg=None):
     """Load rules from CLI argument or cwd directory.
 
     Args:
         input_data: The tool input JSON data
+        rules_path_arg: Optional path from --rules CLI argument
 
     Returns:
         dict: Loaded rules configuration
@@ -32,8 +72,8 @@ def load_rules(input_data):
     rules_path = None
 
     # Check for CLI argument
-    if len(sys.argv) > 1:
-        rules_path = Path(sys.argv[1])
+    if rules_path_arg:
+        rules_path = Path(rules_path_arg)
         if not rules_path.exists():
             raise FileNotFoundError(f"Rules file not found: {rules_path}")
     else:
@@ -176,28 +216,34 @@ def check_command(command, rules):
     return None, {}
 
 
-def output_decision(decision, reason=None, context=None):
+def output_decision(decision, tool_format, reason=None, context=None):
     """Output a permission decision with optional reason and context."""
-    output = {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": decision,
+    if tool_format == VSCODE_COPILOT:
+        output = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": decision,
+            }
         }
-    }
-    if reason:
-        output["hookSpecificOutput"]["permissionDecisionReason"] = reason
-    if context:
-        output["hookSpecificOutput"]["additionalContext"] = context
+        if reason:
+            output["hookSpecificOutput"]["permissionDecisionReason"] = reason
+        if context:
+            output["hookSpecificOutput"]["additionalContext"] = context
+    else:  # copilot-cli
+        output = {"permissionDecision": decision}
+        if reason:
+            output["permissionDecisionReason"] = reason
     print(json.dumps(output))
 
 
-def process_command_tool(args, rules):
+def process_command_tool(args, rules, tool_format=VSCODE_COPILOT):
     """Process command tools - check command restrictions."""
     command = args.get("command", "")
     status, details = check_command(command, rules)
     if status is not None:
         output_decision(
             status,
+            tool_format,
             reason=details.get("reason"),
             context=details.get("context")
         )
@@ -205,13 +251,14 @@ def process_command_tool(args, rules):
     return False
 
 
-def process_editing_tool(args, rules, rules_path):
+def process_editing_tool(args, rules, rules_path, tool_format=VSCODE_COPILOT):
     """Process editing tools - check forbidden edits.
     
     Args:
         args: Tool arguments containing path or paths
         rules: Rules dictionary containing deny_edits
         rules_path: Path to the rules file
+        tool_format: Tool format string for output
     
     Returns:
         True if editing is forbidden, False otherwise
@@ -232,6 +279,7 @@ def process_editing_tool(args, rules, rules_path):
         if is_denied:
             output_decision(
                 "deny",
+                tool_format,
                 reason=details.get("reason"),
                 context=details.get("context")
             )
@@ -241,24 +289,29 @@ def process_editing_tool(args, rules, rules_path):
 
 
 def main():
+    args = parse_args()
+
     # Read the tool input JSON from stdin
     input_data = json.load(sys.stdin)
 
+    # Determine tool format (env var > --tool arg > auto-detect)
+    tool_format = get_tool_format(input_data, args.tool)
+
     # Load rules
-    rules, rules_path = load_rules(input_data)
+    rules, rules_path = load_rules(input_data, args.rules_path)
 
     # Convert to known format
-    converted = convert_tool_entry(input_data)
+    converted = convert_tool_entry(input_data, tool_format)
 
     # Extract tool name and args
     tool_name = converted.get("tool", "")
-    args = converted.get("args", {})
+    tool_args = converted.get("args", {})
 
     # Process based on tool type
     if tool_name in COMMAND_TOOLS:
-        process_command_tool(args, rules)
+        process_command_tool(tool_args, rules, tool_format)
     elif tool_name in EDITING_TOOLS:
-        process_editing_tool(args, rules, rules_path)
+        process_editing_tool(tool_args, rules, rules_path, tool_format)
 
 
 if __name__ == "__main__":
