@@ -101,13 +101,12 @@ class TestGetToolFormat:
 
 class TestOutputDecision:
     def test_vscode_output_structure(self, capsys):
-        output_decision("deny", VSCODE_COPILOT, reason="Not allowed", context="Ask first")
+        output_decision("deny", VSCODE_COPILOT, reason="Not allowed")
         data = json.loads(capsys.readouterr().out)
         inner = data["hookSpecificOutput"]
         assert inner["hookEventName"] == "PreToolUse"
         assert inner["permissionDecision"] == "deny"
         assert inner["permissionDecisionReason"] == "Not allowed"
-        assert inner["additionalContext"] == "Ask first"
 
     def test_copilot_cli_output_structure(self, capsys):
         output_decision("deny", COPILOT_CLI, reason="Not allowed")
@@ -115,12 +114,6 @@ class TestOutputDecision:
         assert "hookSpecificOutput" not in data
         assert data["permissionDecision"] == "deny"
         assert data["permissionDecisionReason"] == "Not allowed"
-
-    def test_copilot_cli_no_context_field(self, capsys):
-        """copilot-cli output has no additionalContext field."""
-        output_decision("deny", COPILOT_CLI, reason="r", context="c")
-        data = json.loads(capsys.readouterr().out)
-        assert "additionalContext" not in data
 
     def test_vscode_allow_decision(self, capsys):
         output_decision("allow", VSCODE_COPILOT)

@@ -90,7 +90,6 @@ class TestConfirmCommands:
                 {
                     "pattern": "rm -rf.*",
                     "reason": "Destructive operation",
-                    "context": "Please confirm deletion",
                 }
             ]
         }
@@ -99,7 +98,6 @@ class TestConfirmCommands:
 
         assert status == "ask"
         assert details.get("reason") == "Destructive operation"
-        assert details.get("context") == "Please confirm deletion"
 
     def test_confirm_priority_over_allowed(self):
         """Requiring confirmation has precedence over approval."""
@@ -156,7 +154,6 @@ class TestProcessCommandTool:
                 {
                     "pattern": "rm -rf",
                     "reason": "Dangerous operation",
-                    "context": "Use safer alternatives",
                 }
             ]
         }
@@ -171,4 +168,3 @@ class TestProcessCommandTool:
         assert output["hookEventName"] == "PreToolUse"
         assert output["permissionDecision"] == "deny"
         assert output["permissionDecisionReason"] == "Dangerous operation"
-        assert output["additionalContext"] == "Use safer alternatives"

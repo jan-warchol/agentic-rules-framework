@@ -131,10 +131,8 @@ def check_path(file_path, deny_list, base_dir):
             details = {}
             if "reason" in forbidden:
                 details["reason"] = forbidden["reason"]
-            if "context" in forbidden:
-                details["context"] = forbidden["context"]
             return True, details
-        
+
         # Check if file is within a forbidden directory
         try:
             # is_relative_to() is available in Python 3.9+
@@ -142,8 +140,6 @@ def check_path(file_path, deny_list, base_dir):
                 details = {}
                 if "reason" in forbidden:
                     details["reason"] = forbidden["reason"]
-                if "context" in forbidden:
-                    details["context"] = forbidden["context"]
                 return True, details
         except AttributeError:
             # Fallback for Python < 3.9
@@ -152,8 +148,6 @@ def check_path(file_path, deny_list, base_dir):
                 details = {}
                 if "reason" in forbidden:
                     details["reason"] = forbidden["reason"]
-                if "context" in forbidden:
-                    details["context"] = forbidden["context"]
                 return True, details
             except ValueError:
                 # Not relative, continue checking
@@ -187,8 +181,6 @@ def check_command(command, rules):
                 details = {}
                 if "reason" in denied:
                     details["reason"] = denied["reason"]
-                if "context" in denied:
-                    details["context"] = denied["context"]
                 return "deny", details
 
     # Check confirm commands (exact match!)
@@ -198,8 +190,6 @@ def check_command(command, rules):
                 details = {}
                 if "reason" in confirm:
                     details["reason"] = confirm["reason"]
-                if "context" in confirm:
-                    details["context"] = confirm["context"]
                 return "ask", details
 
     # Check allowed commands (exact match!)
@@ -209,15 +199,13 @@ def check_command(command, rules):
                 details = {}
                 if "reason" in allowed:
                     details["reason"] = allowed["reason"]
-                if "context" in allowed:
-                    details["context"] = allowed["context"]
                 return "allow", details
 
     return None, {}
 
 
-def output_decision(decision, tool_format, reason=None, context=None):
-    """Output a permission decision with optional reason and context."""
+def output_decision(decision, tool_format, reason=None):
+    """Output a permission decision with optional reason."""
     if tool_format in (VSCODE_COPILOT, CLAUDE_CODE):
         # Both VSCode Copilot and Claude Code use hookSpecificOutput format
         output = {
@@ -228,8 +216,6 @@ def output_decision(decision, tool_format, reason=None, context=None):
         }
         if reason:
             output["hookSpecificOutput"]["permissionDecisionReason"] = reason
-        if context:
-            output["hookSpecificOutput"]["additionalContext"] = context
     else:  # copilot-cli
         output = {"permissionDecision": decision}
         if reason:
@@ -242,12 +228,7 @@ def process_command_tool(args, rules, tool_format=VSCODE_COPILOT):
     command = args.get("command", "")
     status, details = check_command(command, rules)
     if status is not None:
-        output_decision(
-            status,
-            tool_format,
-            reason=details.get("reason"),
-            context=details.get("context")
-        )
+        output_decision(status, tool_format, reason=details.get("reason"))
         return True
     return False
 
@@ -278,12 +259,7 @@ def process_editing_tool(args, rules, rules_path, tool_format=VSCODE_COPILOT):
     for path in paths_to_check:
         is_denied, details = check_path(path, deny_list, rules_dir)
         if is_denied:
-            output_decision(
-                "deny",
-                tool_format,
-                reason=details.get("reason"),
-                context=details.get("context")
-            )
+            output_decision("deny", tool_format, reason=details.get("reason"))
             return True
 
     return False
