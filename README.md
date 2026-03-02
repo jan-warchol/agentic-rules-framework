@@ -1,72 +1,31 @@
 # Agentic rules framework
 
 Framework for defining tool use rules, file access rules, post-tool hooks etc.
-Because what matters today is the tooling around the agent, to guide it so that
-it will work like you want.
+Because what matters today are the guardrails and tools for steering the agent
+in the right direction.
 
-## Why create this tool?
+## Why create this?
 
-1.  **Why not CLAUDE.md / AGENTS.md?** - instructions written there can be helpful,
+1.  **Why not CLAUDE.md / AGENTS.md?** Instructions written there can be helpful,
     but they can also be ignored by the agent. Using hooks with deterministic code
-    is better whenever applicable.
+    is better whenever possible.
 
-2.  **Why not define hooks in VSCode settings?** - First, using `chat.tools.terminal.autoApprove`
-    does not allow fine-grained behaviour (providing deny reason for the agent).
-    Second, I want these rules to be defined in a visible place and in a plain,
-    readable format, not hidden away in a json config somewhere.
+2.  **Why not Claude Code / editor settings?** Deny rules in settings do not allow
+    specifying reasons. Without them, agents will try to find workarounds, rather
+    than follow the intent of the user.
 
-Basically, the agents need to know _why_ they shouldn't do some things. If they are
-simply forbidden something without an explanation, they will stubbornly try again
-and again, or find workarounds. When provided with the reason, they will actually
-be more compliant, as they will aim to follow the intent behind the rules. This could
-theoretically be accomplished with instructions in CLAUDE.md / AGENTS.md, but:
-- the rules must be deterministic, not subject to model's opinion
-- describing _all_ the rules in AGENTS would pollute the context unnecessarily.
+3.  **Obvious** - `agent-rules.yaml` file is self-explanatory. Even without the
+    hooks, agents can (and do!) read it to understand the intended behaviour.
 
-Also, rules defined in a visible place with clear purpose can be read and enacted
-by the agent, even without the hooks themselves (it's very common that agent reads
-`agent-rules.yaml` during a session and corrects its reasoning based on what is
-written there) .
-
-## Features
-
-* allowing tools (regular expresion patterns)
-* denying tools **with explanation for the agent** - for example, if your agent
-  has a tendency to create ad-hoc python scripts for testing (which results in frequent
-  permission prompts), you can deny python usage with a comment "use pytest instead" -
-  and it works!
-* denying editing specific paths **with explanation for the agent** - for example, if
-  there are files that shouldn't be modified without deep consideration, because they
-  are considered "source of truth" (e.g. interface definitions), you can mark them as
-  such (with an explanation so that the agent will understand that it needs to adapt
-  its strategy to these files).
-
-## agent-rules.yaml
-
-This is where the rules should be defined. See the example file in this repo.
-
-## Hooks
-
-Directory [.github/hooks](.github/hooks) contains hooks that:
-
-1. Log prompts and tool usage for further analysis
-2. Run `check_agent_rules.py` before tool usage to assess whether the tool should be
-   allowed, denied or confirmed with the user.
-
-## Future roadmap
-
-- defining post-tool hooks (run linter, tests and let the agent fix the code
-  if needed)
-- integrating tools for code quality metrics (code duplication level, cognitive
-  complexity)
-- support for other platforms (first claude code, then probably GH copilot CLI)
-
+4.  **Contextual** - trying to describe _all_ the rules in AGENTS.md / CLAUDE.md
+    would pollute the context. Instead, provide the agent with feedback about the
+    very thing it is doing at the moment.
 
 ## Installation
 
 ### Requirements
 
-[`uv`](https://docs.astral.sh/uv/) package manager. Install it with
+[`uv`](https://docs.astral.sh/uv/) package manager - install it with
 `curl -LsSf https://astral.sh/uv/install.sh | sh` (or see
 [other installation methods](https://docs.astral.sh/uv/getting-started/installation/)).
 
@@ -83,3 +42,61 @@ Then install the plugin itself:
 ```
 /plugin install check-agent-rules@agentic-rules-framework
 ```
+
+### Other platforms
+
+TODO.
+
+## Features
+
+- deny list for paths, **with explanations** - useful e.g. when some files, like
+  interface definitions, are considered "the source of truth" and shouldn't be
+  modified without user awareness.
+- deny list for commands, **with explanations** - useful e.g. if your agent has a
+  tendency to run tests in multiple non-standard ways (which results in frequent
+  permission prompts) - simply suggest alternative, approved command.
+- allow list for commands (regular expresion patterns).
+
+## `agent-rules.yaml`
+
+This is where the rules should be defined. All relative paths will be resolved
+relative to the directory in which you run `claude`.
+
+```yaml
+# Path must be an exact match (regex patterns not supported yet).
+deny_edits:
+  - path: agent-rules.yaml
+    reason: Only human can edit the agent rules configuration.
+  - path: src/interfaces.ts
+    reason: >
+      Modifying or extending interfaces can only be done by a human operator.
+      If you think changing an interface is necessary, report that to the user.
+
+# Deny list uses partial matching ("rm -rf" will match "echo test && rm -rf /tmp")
+deny_commands:
+  - pattern: "rm -rf"
+    reason: Destructive command. Instead, use "trash" to move files to system trash.
+
+# Allow list uses full matching (anchors ^ and $ are implied)
+allow_commands:
+  - pattern: "trash .*"
+```
+
+## How it works
+
+The tool defines hooks that run `check_agent_rules.py` script before tool usage
+to check whether the tool should be allowed, denied or confirmed with the user.
+`check_agent_rules.py` loads rules from `agent-rules.yaml` file located in the
+directory where the agentic tool is running.
+
+See [.claude-plugin/plugin.json](.claude-plugin/plugin.json) for Claude Code
+configuration and [.github/hooks](.github/hooks) for GitHub Copilot configuration.
+
+## Future roadmap
+
+- defining post-tool hooks (run linter, tests and let the agent fix the code
+  if needed)
+- integrating tools for code quality metrics (code duplication level, cognitive
+  complexity)
+- documenting installation process for other platforms (GitHub copilot CLI,
+  VScode copilot chat)

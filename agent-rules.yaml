@@ -1,17 +1,12 @@
-# Tool checking rules configuration
-
-# Paths that cannot be edited
-# Each entry has a path (can be just a filename or include directory)
-# Optional fields: reason (for permissionDecisionReason), context (for additionalContext)
 deny_edits:
   - path: agent-rules.yaml
-    reason: Only human can edit the agent rules configuration to ensure safety and control.
+    reason: Only human can edit the agent rules configuration to ensure compliance.
   - path: tests/test_command_permissions.py
     reason: >
-      This file is frozen for edits. Test cases in this file have been carefully validated.
-      Allowing edits could compromise the integrity of the tests and lead to unreliable results.
+      This file is frozen for edits. Test cases in this file have been carefully
+      validated, and allowing edits could introduce unintended behaviour changes.
 
-# Denied patterns use partial matching, so "rm -rf" will match "echo test && rm -rf /tmp"
+# Deny list uses partial matching ("rm -rf" will match "echo test && rm -rf /tmp")
 deny_commands:
   - pattern: "pytest .+"
     reason: >
@@ -20,24 +15,12 @@ deny_commands:
       and allowing arbitrary arguments can lead to unintended consequences.
   - pattern: "git commit"
     reason: >
-      Committing changes should be done manually by a human to ensure proper review of changes.
-  # - pattern: "rm -rf"
-  #   reason: "Destructive commands are not allowed"
+      Committing changes should be done manually by a human to ensure proper review.
 
-# Command patterns to allow (regex patterns, anchors ^ and $ are implied - exact match)
+# Allow list uses full matching (anchors ^ and $ are implied)
 allow_commands:
   - pattern: pytest
-  # - pattern: "ls.*"
-  #   context: "Listing files is encouraged for better understanding"
-  # - pattern: "git status"
-  #   reason: "Safe read-only operation"
-  #   context: "Helps understand repository state"
 
-# Command patterns to ask for confirmation (regex, exact match)
 # confirm_commands:
-#   - pattern: "rm -rf.*"
-#     reason: "Destructive operation"
-#     context: "Please confirm you want to delete files"
 #   - pattern: "git push.*"
-#     reason: "Publishing changes"
-#     context: "Confirm you want to push to remote"
+#     reason: "User must confirm before pushing to remote"
