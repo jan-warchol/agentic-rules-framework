@@ -60,3 +60,26 @@ Directory [.github/hooks](.github/hooks) contains hooks that:
 - integrating tools for code quality metrics (code duplication level, cognitive
   complexity)
 - support for other platforms (first claude code, then probably GH copilot CLI)
+
+
+## Installation
+
+### Requirements
+
+[`uv`](https://docs.astral.sh/uv/) package manager. Install it with
+`curl -LsSf https://astral.sh/uv/install.sh | sh` (or see
+[other installation methods](https://docs.astral.sh/uv/getting-started/installation/)).
+
+### Claude code
+
+First, register the marketplace:
+
+```
+/plugin marketplace add jan-warchol/agentic-rules-framework
+```
+
+Then install the plugin itself:
+
+```
+/plugin install check-agent-rules@agentic-rules-framework
+```

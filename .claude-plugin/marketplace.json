@@ -1,0 +1,14 @@
+{
+  "name": "agentic-rules-framework",
+  "owner": {
+    "name": "Jan Warchoł",
+    "email": "jan.warchol@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "check-agent-rules",
+      "source": "./",
+      "description": "Check if the agent's actions comply with project rules defined in agent-rules.yaml, and enforce them using hooks."
+    }
+  ]
+}

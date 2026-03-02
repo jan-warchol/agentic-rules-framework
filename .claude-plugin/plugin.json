@@ -1,0 +1,24 @@
+{
+  "name": "check-agent-rules",
+  "version": "0.1.0",
+  "description": "Check if the agent's actions comply with project rules defined in agent-rules.yaml, and enforce them using hooks.",
+  "author": {
+    "name": "Jan Warchoł",
+    "email": "jan.warchol@gmail.com",
+    "url": "https://github.com/jan-warchol"
+  },
+  "repository": "https://github.com/jan-warchol/agentic-rules-framework",
+  "license": "Apache-2.0",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --project ${CLAUDE_PLUGIN_ROOT} ${CLAUDE_PLUGIN_ROOT}/check_agent_rules.py"
+          }
+        ]
+      }
+    ]
+  }
+}
