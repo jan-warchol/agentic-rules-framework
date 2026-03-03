@@ -59,7 +59,8 @@ TODO.
 
 ## `agent-rules.yaml`
 
-This is where the rules should be defined. All relative paths will be resolved
+This is where the rules should be defined. This file should be placed in the
+directory from which you run your agent. All relative paths will be resolved
 relative to the directory in which you run `claude`.
 
 ```yaml
@@ -91,6 +92,13 @@ directory where the agentic tool is running.
 
 See [.claude-plugin/plugin.json](.claude-plugin/plugin.json) for Claude Code
 configuration and [.github/hooks](.github/hooks) for GitHub Copilot configuration.
+
+The script `check_agent_rules.py` has a simple sructure:
+
+- load rules
+- normalize agent-specific input format
+- check normalized input against the rules
+- wrap decision in format appropriate for the agent.
 
 ## Future roadmap
 

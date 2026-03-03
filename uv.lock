@@ -8,7 +8,7 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "agentic-harness"
+name = "agentic-rules-framework"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

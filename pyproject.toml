@@ -1,7 +1,7 @@
 [project]
-name = "agentic-harness"
+name = "agentic-rules-framework"
 version = "0.1.0"
-description = "Tool checking harness with configurable rules"
+description = "Tool checking harness with configurable rules for agentic systems."
 requires-python = ">=3.8"
 dependencies = [
     "pyyaml>=6.0",
