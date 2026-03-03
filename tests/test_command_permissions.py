@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 """Unit tests for check_agent_rules.py command checking logic using pytest."""
 
-import sys
-from pathlib import Path
 import pytest
 import json
 
-# Add parent directory to path to import check_agent_rules
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from check_agent_rules import check_command, process_command_tool
+from src.check_rules import check_command, process_command_tool
+from src.convert import VSCODE_COPILOT
 
 
 class TestDeniedCommands:
@@ -159,7 +155,7 @@ class TestProcessCommandTool:
         }
         args = {"command": "rm -rf /tmp"}
 
-        result = process_command_tool(args, rules)
+        result = process_command_tool(args, rules, VSCODE_COPILOT)
 
         assert result is True
         captured = capsys.readouterr()

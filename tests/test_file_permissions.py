@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 """Unit tests for file edit permission checking in check_agent_rules.py."""
 
-import sys
 from pathlib import Path
 import pytest
 import json
 import tempfile
 import os
 
-# Add parent directory to path to import check_agent_rules
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from check_agent_rules import check_path, process_editing_tool
+from src.check_rules import check_path, process_editing_tool
+from src.convert import VSCODE_COPILOT
 
 
 class TestDeniedPaths:
@@ -203,7 +200,7 @@ class TestProcessEditingTool:
 
             args = {"path": str(test_file)}
 
-            result = process_editing_tool(args, {"deny_edits": deny_list}, rules_file)
+            result = process_editing_tool(args, {"deny_edits": deny_list}, rules_file, VSCODE_COPILOT)
 
             assert result is True
             captured = capsys.readouterr()
@@ -223,7 +220,7 @@ class TestProcessEditingTool:
             denied_edits = [{"path": "agent-rules.yaml"}]
             args = {"paths": ["file1.py", "file2.py", "file3.py"]}
 
-            result = process_editing_tool(args, {"deny_edits": denied_edits}, rules_file)
+            result = process_editing_tool(args, {"deny_edits": denied_edits}, rules_file, VSCODE_COPILOT)
 
             assert result is False
             captured = capsys.readouterr()
@@ -247,7 +244,7 @@ class TestProcessEditingTool:
             ]
             args = {"paths": ["file1.py", str(protected_file), "file3.py"]}
 
-            result = process_editing_tool(args, {"deny_edits": denied_edits}, rules_file)
+            result = process_editing_tool(args, {"deny_edits": denied_edits}, rules_file, VSCODE_COPILOT)
 
             assert result is True
             captured = capsys.readouterr()

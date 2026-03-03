@@ -2,10 +2,9 @@
 """Convert prompt-history.jsonl and tool-inputs/results.jsonl to simplified format."""
 
 import json
-import sys
 from pathlib import Path
 import yaml
-from conversion_utils import parse_timestamp, run_converter
+from .conversion_utils import parse_timestamp, run_converter
 
 VSCODE_COPILOT = "vscode-copilot"
 COPILOT_CLI = "copilot-cli"
@@ -30,7 +29,7 @@ def detect_tool_format(entry):
     return None
 
 # Load configuration
-config_path = Path(__file__).parent / "config.yaml"
+config_path = Path(__file__).parent.parent / "config.yaml"
 with open(config_path) as f:
     config = yaml.safe_load(f)
 
@@ -118,9 +117,3 @@ def convert_entry(entry):
         return convert_prompt_entry(entry)
 
 
-def main():
-    run_converter(convert_entry, sys.argv[0])
-
-
-if __name__ == "__main__":
-    main()

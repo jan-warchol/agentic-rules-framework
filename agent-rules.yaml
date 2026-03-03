@@ -10,16 +10,16 @@ deny_edits:
 deny_commands:
   - pattern: "pytest .+"
     reason: >
-      When running python tests, prefer running "pytest" without additional arguments.
-      It is impractical to list all allowed arguments that can be passed to pytest,
-      and allowing arbitrary arguments can lead to unintended consequences.
+      When running python tests, prefer running "uv run pytest" without additional
+      arguments. It is impractical to list all allowed arguments that can be passed
+      to pytest, and allowing arbitrary arguments can lead to unintended consequences.
   - pattern: "git commit"
     reason: >
       Committing changes should be done manually by a human to ensure proper review.
 
 # Allow list uses full matching (anchors ^ and $ are implied)
 allow_commands:
-  - pattern: pytest
+  - pattern: uv run pytest
 
 # confirm_commands:
 #   - pattern: "git push.*"

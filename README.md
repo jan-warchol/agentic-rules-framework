@@ -14,10 +14,10 @@ in the right direction.
     specifying reasons. Without them, agents will try to find workarounds, rather
     than follow the intent of the user.
 
-3.  **Obvious** - `agent-rules.yaml` file is self-explanatory. Even without the
-    hooks, agents can (and do!) read it to understand the intended behaviour.
+3.  **Obvious format** - `agent-rules.yaml` file is self-explanatory. Even without
+    the hooks, agents can (and do!) read it to understand the intended behaviour.
 
-4.  **Contextual** - trying to describe _all_ the rules in AGENTS.md / CLAUDE.md
+4.  **Context management** - trying to describe _all_ the rules in AGENTS.md / CLAUDE.md
     would pollute the context. Instead, provide the agent with feedback about the
     very thing it is doing at the moment.
 
