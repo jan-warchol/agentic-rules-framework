@@ -60,9 +60,13 @@ TODO.
 
 ## `agent-rules.yaml`
 
-This is where the rules should be defined. This file should be placed in the
-directory from which you run your agent. All relative paths will be resolved
-relative to the directory in which you run `claude`.
+This is where the rules should be defined. This file is loaded from two locations:
+
+- the directory from which you run your agent
+- your user configuration directory (`~/.config/agentic-rules-framework` on Linux)
+
+All relative paths will be resolved relative to the directory in which you run
+your agent.
 
 ```yaml
 # Path must be an exact match (regex patterns not supported yet).

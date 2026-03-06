@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Tool checking harness with configurable rules for agentic systems."
 requires-python = ">=3.8"
 dependencies = [
+    "platformdirs>=3.0",
     "pyyaml>=6.0",
     "pytest>=7.0",
     "pytest-cov>=4.0",
