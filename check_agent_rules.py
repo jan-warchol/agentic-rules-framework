@@ -3,15 +3,10 @@ import argparse
 import json
 import sys
 
-from src.check_rules import (
-    get_tool_format,
-    load_rules,
-    convert_tool_entry,
-    process_command_tool,
-    process_editing_tool,
-    COMMAND_TOOLS,
-    EDITING_TOOLS,
-)
+from src.normalize import normalize_input, simplify_tool_call
+from src.rules import load_rules
+from src.check_rules import process_tool_call
+from src.io_format import get_tool_format, output_decision
 
 
 def parse_args():
@@ -34,11 +29,8 @@ if __name__ == "__main__":
     args = parse_args()
     input_data = json.load(sys.stdin)
     tool_format = get_tool_format(input_data, args.tool)
-    rules, rules_path = load_rules(input_data, args.rules_path)
-    converted = convert_tool_entry(input_data, tool_format)
-    tool_name = converted.get("tool", "")
-    tool_args = converted.get("args", {})
-    if tool_name in COMMAND_TOOLS:
-        process_command_tool(tool_args, rules, tool_format)
-    elif tool_name in EDITING_TOOLS:
-        process_editing_tool(tool_args, rules, rules_path, tool_format)
+    rules, base_dir = load_rules(input_data, args.rules_path)
+    simplified = simplify_tool_call(normalize_input(input_data, tool_format))
+    status, reason = process_tool_call(simplified, rules, base_dir)
+    if status is not None:
+        output_decision(status, tool_format, reason=reason)

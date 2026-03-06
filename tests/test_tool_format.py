@@ -2,12 +2,10 @@
 """Tests for multi-tool format detection and output."""
 
 import json
-import os
-from pathlib import Path
 import pytest
 
-from src.convert import detect_tool_format, convert_tool_entry, VSCODE_COPILOT, COPILOT_CLI
-from src.check_rules import get_tool_format, output_decision
+from src.normalize import normalize_input, simplify_tool_call, VSCODE_COPILOT, COPILOT_CLI
+from src.io_format import get_tool_format, output_decision
 
 
 # --- Sample input data ---
@@ -28,72 +26,74 @@ COPILOT_CLI_ENTRY = {
 }
 
 
-class TestDetectToolFormat:
-    def test_vscode_detected_by_hookEventName(self):
-        assert detect_tool_format(VSCODE_ENTRY) == VSCODE_COPILOT
-
-    def test_copilot_cli_detected_by_toolName(self):
-        assert detect_tool_format(COPILOT_CLI_ENTRY) == COPILOT_CLI
-
-    def test_unknown_format_returns_none(self):
-        assert detect_tool_format({"foo": "bar"}) is None
-
-
-class TestConvertToolEntry:
-    def test_vscode_extracts_tool_name_and_command(self):
-        result = convert_tool_entry(VSCODE_ENTRY)
+class TestNormalizeToolCall:
+    def test_vscode_extracts_tool_name_and_args(self):
+        result = normalize_input(VSCODE_ENTRY, VSCODE_COPILOT)
         assert result["tool"] == "run_in_terminal"
-        assert result["args"]["command"] == "echo hello"
+        assert result["args"] == {"command": "echo hello"}
         assert result["cwd"] == "/some/path"
 
-    def test_copilot_cli_extracts_tool_name_and_command(self):
-        result = convert_tool_entry(COPILOT_CLI_ENTRY)
+    def test_copilot_cli_parses_json_args(self):
+        result = normalize_input(COPILOT_CLI_ENTRY, COPILOT_CLI)
         assert result["tool"] == "bash"
         assert result["args"]["command"] == "echo hello"
         assert result["cwd"] == "/some/path"
 
     def test_copilot_cli_explicit_format(self):
-        result = convert_tool_entry(COPILOT_CLI_ENTRY, tool_format=COPILOT_CLI)
+        result = normalize_input(COPILOT_CLI_ENTRY, tool_format=COPILOT_CLI)
         assert result["tool"] == "bash"
 
     def test_vscode_explicit_format(self):
-        result = convert_tool_entry(VSCODE_ENTRY, tool_format=VSCODE_COPILOT)
+        result = normalize_input(VSCODE_ENTRY, tool_format=VSCODE_COPILOT)
         assert result["tool"] == "run_in_terminal"
 
-    def test_copilot_cli_edit_tool_path(self):
+
+class TestSimplifyToolCall:
+    def test_extracts_command(self):
+        normalized = normalize_input(VSCODE_ENTRY, VSCODE_COPILOT)
+        result = simplify_tool_call(normalized)
+        assert result["tool"] == "run_in_terminal"
+        assert result["command"] == "echo hello"
+        assert result["cwd"] == "/some/path"
+
+    def test_copilot_cli_extracts_command(self):
+        normalized = normalize_input(COPILOT_CLI_ENTRY, COPILOT_CLI)
+        result = simplify_tool_call(normalized)
+        assert result["command"] == "echo hello"
+
+    def test_extracts_path(self):
         entry = {
             "timestamp": 1771453219699,
             "toolName": "edit",
             "toolArgs": '{"path": "/some/file.py", "old_str": "x", "new_str": "y"}',
             "cwd": "/some/path",
         }
-        result = convert_tool_entry(entry)
+        result = simplify_tool_call(normalize_input(entry, COPILOT_CLI))
         assert result["tool"] == "edit"
-        assert result["args"]["path"] == "/some/file.py"
+        assert result["paths"] == ["/some/file.py"]
 
 
 class TestGetToolFormat:
+    def test_vscode_detected_by_hookEventName(self, monkeypatch):
+        monkeypatch.delenv("AGENT_RULES_TOOL", raising=False)
+        assert get_tool_format(VSCODE_ENTRY) == VSCODE_COPILOT
+
+    def test_copilot_cli_detected_by_toolName(self, monkeypatch):
+        monkeypatch.delenv("AGENT_RULES_TOOL", raising=False)
+        assert get_tool_format(COPILOT_CLI_ENTRY) == COPILOT_CLI
+
     def test_env_var_takes_highest_priority(self, monkeypatch):
         monkeypatch.setenv("AGENT_RULES_TOOL", COPILOT_CLI)
-        # Even though input is vscode format and --tool says vscode, env var wins
-        result = get_tool_format(VSCODE_ENTRY, tool_arg=VSCODE_COPILOT)
-        assert result == COPILOT_CLI
+        assert get_tool_format(VSCODE_ENTRY, tool_arg=VSCODE_COPILOT) == COPILOT_CLI
 
     def test_tool_arg_takes_priority_over_autodetect(self, monkeypatch):
         monkeypatch.delenv("AGENT_RULES_TOOL", raising=False)
-        # Input is vscode format but --tool says copilot-cli
-        result = get_tool_format(VSCODE_ENTRY, tool_arg=COPILOT_CLI)
-        assert result == COPILOT_CLI
-
-    def test_autodetect_used_when_no_env_or_arg(self, monkeypatch):
-        monkeypatch.delenv("AGENT_RULES_TOOL", raising=False)
-        assert get_tool_format(VSCODE_ENTRY, tool_arg=None) == VSCODE_COPILOT
-        assert get_tool_format(COPILOT_CLI_ENTRY, tool_arg=None) == COPILOT_CLI
+        assert get_tool_format(VSCODE_ENTRY, tool_arg=COPILOT_CLI) == COPILOT_CLI
 
     def test_raises_when_format_cannot_be_detected(self, monkeypatch):
         monkeypatch.delenv("AGENT_RULES_TOOL", raising=False)
         with pytest.raises(ValueError, match="Cannot detect tool format"):
-            get_tool_format({"foo": "bar"}, tool_arg=None)
+            get_tool_format({"foo": "bar"})
 
 
 class TestOutputDecision:

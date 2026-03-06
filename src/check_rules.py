@@ -1,14 +1,9 @@
-#!/usr/bin/env python3
 """Hook to check tool usage and deny certain operations."""
 
-import os
+import re
 from pathlib import Path
 import yaml
-from .convert import convert_tool_entry, detect_tool_format, VSCODE_COPILOT, COPILOT_CLI, CLAUDE_CODE
-from .rules import load_rules, check_command, check_path
-from .output import output_decision
 
-# Load config (tools lists)
 config_path = Path(__file__).parent.parent / "config.yaml"
 with open(config_path) as f:
     config = yaml.safe_load(f)
@@ -17,72 +12,108 @@ COMMAND_TOOLS = config.get("command_tools", [])
 EDITING_TOOLS = config.get("editing_tools", [])
 
 
-def get_tool_format(input_data, tool_arg=None):
-    """Determine which tool format to use.
-
-    Priority order:
-      1. AGENT_RULES_TOOL environment variable
-      2. --tool CLI argument
-      3. Auto-detection from input data fields
+def check_command(command, rules):
+    """Check command against deny, allow, and confirm lists.
 
     Args:
-        input_data: Raw input JSON data
-        tool_arg: Value of the --tool CLI argument (or None)
+        command: The command string to check
+        rules: Rules dictionary containing deny_commands, allow_commands, and confirm_commands
 
     Returns:
-        Tool format string: 'claude-code', 'vscode-copilot' or 'copilot-cli'
-
-    Raises:
-        ValueError: If format cannot be determined
+        Tuple of (status, reason): status is 'deny', 'allow', 'ask', or None; reason is str or None
     """
-    env_tool = os.environ.get("AGENT_RULES_TOOL")
-    if env_tool:
-        return env_tool
-    if tool_arg:
-        return tool_arg
-    detected = detect_tool_format(input_data)
-    if detected is None:
-        raise ValueError("Cannot detect tool format from input; use --tool or AGENT_RULES_TOOL")
-    return detected
+    if not command:
+        return None, None
+
+    deny_commands = rules.get("deny_commands", [])
+    allow_commands = rules.get("allow_commands", [])
+    confirm_commands = rules.get("confirm_commands", [])
+
+    # Check denied commands first (partial match)
+    for denied in deny_commands:
+        if re.search(denied["pattern"], command):
+            return "deny", denied.get("reason")
+
+    # Check confirm commands (exact match!)
+    for confirm in confirm_commands:
+        if re.fullmatch(confirm["pattern"], command):
+            return "ask", confirm.get("reason")
+
+    # Check allowed commands (exact match!)
+    for allowed in allow_commands:
+        if re.fullmatch(allowed["pattern"], command):
+            return "allow", allowed.get("reason")
+
+    return None, None
 
 
-def process_command_tool(args, rules, tool_format):
-    """Process command tools - check command restrictions."""
-    command = args.get("command", "")
-    status, details = check_command(command, rules)
-    if status is not None:
-        output_decision(status, tool_format, reason=details.get("reason"))
-        return True
-    return False
-
-
-def process_editing_tool(args, rules, rules_path, tool_format):
-    """Process editing tools - check forbidden edits.
+def check_path(file_path, deny_list, base_dir):
+    """Check if file path is forbidden.
 
     Args:
-        args: Tool arguments containing path or paths
-        rules: Rules dictionary containing deny_edits
-        rules_path: Path to the rules file
-        tool_format: Tool format string for output
+        file_path: Path to check (absolute or relative)
+        deny_list: List of forbidden path entries
+        base_dir: Reference directory for resolving relative paths
 
     Returns:
-        True if editing is forbidden, False otherwise
+        Tuple of (status, reason): status is 'deny' or None, reason is str or None
+    """
+    if not file_path:
+        return None, None
+
+    # Resolve file path to absolute
+    file_path_abs = Path(file_path).resolve()
+
+    for forbidden in deny_list:
+        forbidden_path = Path(forbidden["path"])
+
+        # If relative, resolve relative to rules directory
+        if not forbidden_path.is_absolute():
+            forbidden_path_abs = (base_dir / forbidden_path).resolve()
+        else:
+            forbidden_path_abs = forbidden_path.resolve()
+
+        reason = forbidden.get("reason")
+
+        # Check if file is within a forbidden directory (or matches exactly)
+        try:
+            # is_relative_to() is available in Python 3.9+
+            if file_path_abs.is_relative_to(forbidden_path_abs):
+                return "deny", reason
+        except AttributeError:
+            # Fallback for Python < 3.9
+            try:
+                file_path_abs.relative_to(forbidden_path_abs)
+                return "deny", reason
+            except ValueError:
+                pass
+
+    return None, None
+
+
+def check_paths(paths, rules, base_dir):
+    """Check a list of paths against deny_edits rules.
+
+    Returns:
+        Tuple of (status, reason): status is 'deny' or None
     """
     deny_list = rules.get("deny_edits", [])
-    rules_dir = rules_path.parent
+    for path in paths:
+        status, reason = check_path(path, deny_list, base_dir)
+        if status == "deny":
+            return status, reason
+    return None, None
 
-    # Normalize to list of paths
-    paths_to_check = []
-    if args.get("path"):
-        paths_to_check.append(args["path"])
-    if "paths" in args:
-        paths_to_check.extend(args["paths"])
 
-    # Check all paths
-    for path in paths_to_check:
-        is_denied, details = check_path(path, deny_list, rules_dir)
-        if is_denied:
-            output_decision("deny", tool_format, reason=details.get("reason"))
-            return True
+def process_tool_call(tool_input, rules, base_dir):
+    """Check a tool call against command and path rules.
 
-    return False
+    Returns:
+        Tuple of (status, reason): status is 'deny', 'allow', 'ask', or None
+    """
+    tool_name = tool_input.get("tool")
+    if tool_name in COMMAND_TOOLS:
+        return check_command(tool_input.get("command") or "", rules)
+    if tool_name in EDITING_TOOLS:
+        return check_paths(tool_input.get("paths", []), rules, base_dir)
+    return None, None

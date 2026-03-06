@@ -2,10 +2,8 @@
 """Unit tests for check_agent_rules.py command checking logic using pytest."""
 
 import pytest
-import json
 
-from src.check_rules import check_command, process_command_tool
-from src.convert import VSCODE_COPILOT
+from src.check_rules import check_command
 
 
 class TestDeniedCommands:
@@ -15,10 +13,10 @@ class TestDeniedCommands:
         """Denied pattern by default matches anywhere in command."""
         rules = {"deny_commands": [{"pattern": "rm -rf", "reason": "Dangerous"}]}
 
-        status, details = check_command("echo 'test' && rm -rf /tmp", rules)
+        status, reason = check_command("echo 'test' && rm -rf /tmp", rules)
 
         assert status == "deny"
-        assert details.get("reason") == "Dangerous"
+        assert reason == "Dangerous"
 
     def test_denied_exact_match(self):
         """Anchors can be used to check denied pattern for exact match."""
@@ -26,10 +24,10 @@ class TestDeniedCommands:
             "deny_commands": [{"pattern": "^rm -rf /$", "reason": "Root deletion"}]
         }
 
-        status, details = check_command("rm -rf /tmp", rules)
+        status, reason = check_command("rm -rf /tmp", rules)
 
         assert status is None  # Not denied because pattern does not match exactly
-        assert details == {}
+        assert reason is None
 
     def test_denied_priority_over_allowed(self):
         """Denied commands have precedence before allowed."""
@@ -38,10 +36,10 @@ class TestDeniedCommands:
             "allow_commands": [{"pattern": "git push.*"}],
         }
 
-        status, details = check_command("git push origin main", rules)
+        status, reason = check_command("git push origin main", rules)
 
         assert status == "deny"
-        assert details.get("reason") == "No pushing"
+        assert reason == "No pushing"
 
 
 @pytest.fixture
@@ -90,10 +88,10 @@ class TestConfirmCommands:
             ]
         }
 
-        status, details = check_command("rm -rf /tmp/test", rules)
+        status, reason = check_command("rm -rf /tmp/test", rules)
 
         assert status == "ask"
-        assert details.get("reason") == "Destructive operation"
+        assert reason == "Destructive operation"
 
     def test_confirm_priority_over_allowed(self):
         """Requiring confirmation has precedence over approval."""
@@ -110,10 +108,10 @@ class TestConfirmCommands:
         """Test that unmatched command returns None."""
         rules = {"confirm_commands": [{"pattern": "rm -rf.*"}]}
 
-        status, details = check_command("ls -la", rules)
+        status, reason = check_command("ls -la", rules)
 
         assert status is None
-        assert details == {}
+        assert reason is None
 
 
 class TestPartialRules:
@@ -124,43 +122,17 @@ class TestPartialRules:
         rules = {"deny_commands": [{"pattern": "rm -rf", "reason": "Dangerous"}]}
 
         # Should deny matching command
-        status, details = check_command("rm -rf /tmp", rules)
+        status, reason = check_command("rm -rf /tmp", rules)
         assert status == "deny"
-        assert details.get("reason") == "Dangerous"
+        assert reason == "Dangerous"
 
         # Should return None for non-matching command
-        status, details = check_command("ls -la", rules)
+        status, reason = check_command("ls -la", rules)
         assert status is None
-        assert details == {}
+        assert reason is None
 
     def test_empty_rules(self):
         """Test with completely empty rules - should return none for any command."""
-        status, details = check_command("any command", {})
+        status, reason = check_command("any command", {})
         assert status is None
-        assert details == {}
-
-
-class TestProcessCommandTool:
-    """Test the process_command_tool function and its JSON output format."""
-
-    def test_denied_command_output(self, capsys):
-        """Test JSON output format for denied command."""
-        rules = {
-            "deny_commands": [
-                {
-                    "pattern": "rm -rf",
-                    "reason": "Dangerous operation",
-                }
-            ]
-        }
-        args = {"command": "rm -rf /tmp"}
-
-        result = process_command_tool(args, rules, VSCODE_COPILOT)
-
-        assert result is True
-        captured = capsys.readouterr()
-        output = json.loads(captured.out)["hookSpecificOutput"]
-
-        assert output["hookEventName"] == "PreToolUse"
-        assert output["permissionDecision"] == "deny"
-        assert output["permissionDecisionReason"] == "Dangerous operation"
+        assert reason is None
