@@ -68,6 +68,8 @@ This is where the rules should be defined. This file is loaded from two location
 All relative paths will be resolved relative to the directory in which you run
 your agent.
 
+You can also use `{cwd}` in the rules to refer to agent base directory:
+
 ```yaml
 # Path must be an exact match (regex patterns not supported yet).
 deny_edits:
@@ -82,6 +84,8 @@ deny_edits:
 deny_commands:
   - pattern: "rm -rf"
     reason: Destructive command. Instead, use "trash" to move files to system trash.
+  - pattern: "cd {cwd}"
+    reason: No need to cd to current directory, you are already there.
 
 # Allow list uses full matching (anchors ^ and $ are implied)
 allow_commands:

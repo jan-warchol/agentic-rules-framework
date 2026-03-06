@@ -12,12 +12,20 @@ COMMAND_TOOLS = config.get("command_tools", [])
 EDITING_TOOLS = config.get("editing_tools", [])
 
 
-def check_command(command, rules):
+def _resolve_pattern(pattern, cwd):
+    """Replace {cwd} in a pattern with the re-escaped CWD value."""
+    if cwd and "{cwd}" in pattern:
+        return pattern.replace("{cwd}", re.escape(cwd))
+    return pattern
+
+
+def check_command(command, rules, cwd=None):
     """Check command against deny, allow, and confirm lists.
 
     Args:
         command: The command string to check
         rules: Rules dictionary containing deny_commands, allow_commands, and confirm_commands
+        cwd: Current working directory, used to resolve {cwd} in patterns
 
     Returns:
         Tuple of (status, reason): status is 'deny', 'allow', 'ask', or None; reason is str or None
@@ -31,17 +39,20 @@ def check_command(command, rules):
 
     # Check denied commands first (partial match)
     for denied in deny_commands:
-        if re.search(denied["pattern"], command):
+        pattern = _resolve_pattern(denied["pattern"], cwd)
+        if re.search(pattern, command):
             return "deny", denied.get("reason")
 
     # Check confirm commands (exact match!)
     for confirm in confirm_commands:
-        if re.fullmatch(confirm["pattern"], command):
+        pattern = _resolve_pattern(confirm["pattern"], cwd)
+        if re.fullmatch(pattern, command):
             return "ask", confirm.get("reason")
 
     # Check allowed commands (exact match!)
     for allowed in allow_commands:
-        if re.fullmatch(allowed["pattern"], command):
+        pattern = _resolve_pattern(allowed["pattern"], cwd)
+        if re.fullmatch(pattern, command):
             return "allow", allowed.get("reason")
 
     return None, None
@@ -113,7 +124,7 @@ def process_tool_call(tool_input, rules, base_dir):
     """
     tool_name = tool_input.get("tool")
     if tool_name in COMMAND_TOOLS:
-        return check_command(tool_input.get("command") or "", rules)
+        return check_command(tool_input.get("command") or "", rules, cwd=tool_input.get("cwd"))
     if tool_name in EDITING_TOOLS:
         return check_paths(tool_input.get("paths", []), rules, base_dir)
     return None, None
