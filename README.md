@@ -15,7 +15,8 @@ in the right direction.
     than follow the intent of the user.
 
 3.  **Obvious format** - `agent-rules.yaml` file is self-explanatory. Even without
-    the hooks, agents can (and do!) read it to understand the intended behaviour.
+    the hooks enforcing the rules, agents can (and do!) read it to understand the
+    intended behaviour.
 
 4.  **Context management** - trying to describe _all_ the rules in AGENTS.md / CLAUDE.md
     would pollute the context. Instead, provide the agent with feedback about the
@@ -108,3 +109,8 @@ The script `check_agent_rules.py` has a simple sructure:
   complexity)
 - documenting installation process for other platforms (GitHub copilot CLI,
   VScode copilot chat)
+
+## Security disclaimer
+
+This is **not** a security enforcement tool. A malicious and determined agent
+could find a way to bypass the checks.

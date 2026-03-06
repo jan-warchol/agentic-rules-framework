@@ -8,7 +8,7 @@
     {
       "name": "check-agent-rules",
       "source": "./",
-      "description": "Check if the agent's actions comply with project rules defined in agent-rules.yaml, and enforce them using hooks."
+      "description": "Check if the agent's actions comply with project rules defined in agent-rules.yaml, and enforce them using hooks. Requires python and uv package manager."
     }
   ]
 }
