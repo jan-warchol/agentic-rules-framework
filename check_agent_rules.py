@@ -29,7 +29,10 @@ if __name__ == "__main__":
     args = parse_args()
     input_data = json.load(sys.stdin)
     tool_format = get_tool_format(input_data, args.tool)
-    rules, base_dir = load_rules(input_data, args.rules_path)
+    try:
+        rules, base_dir = load_rules(input_data, args.rules_path)
+    except FileNotFoundError:
+        sys.exit(0)
     simplified = simplify_tool_call(normalize_input(input_data, tool_format))
     status, reason = process_tool_call(simplified, rules, base_dir)
     if status is not None:
