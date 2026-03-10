@@ -61,7 +61,7 @@ class TestLoadRules:
             write_rules(tmpdir, project_rules)
 
             with patch("platformdirs.user_config_dir", return_value="/nonexistent/path"):
-                rules, base_dir = load_rules({"cwd": tmpdir})
+                rules, base_dir, _ = load_rules({"cwd": tmpdir})
 
             assert rules == project_rules
             assert base_dir == Path(tmpdir)
@@ -73,7 +73,7 @@ class TestLoadRules:
             write_rules(global_config_dir, global_rules)
 
             with patch("platformdirs.user_config_dir", return_value=global_config_dir):
-                rules, base_dir = load_rules({"cwd": project_dir})
+                rules, base_dir, _ = load_rules({"cwd": project_dir})
 
             assert rules == global_rules
             assert base_dir == Path(project_dir)
@@ -89,7 +89,7 @@ class TestLoadRules:
             write_rules(project_dir, project_rules)
 
             with patch("platformdirs.user_config_dir", return_value=global_config_dir):
-                rules, base_dir = load_rules({"cwd": project_dir})
+                rules, base_dir, _ = load_rules({"cwd": project_dir})
 
             assert len(rules["deny_commands"]) == 2
             assert rules["deny_commands"][0]["reason"] == "global"
@@ -112,7 +112,7 @@ class TestLoadRules:
             explicit_path = write_rules(project_dir, project_rules)
 
             with patch("platformdirs.user_config_dir", return_value=global_config_dir):
-                rules, base_dir = load_rules({}, rules_path_arg=str(explicit_path))
+                rules, base_dir, _ = load_rules({}, rules_path_arg=str(explicit_path))
 
             assert len(rules["deny_commands"]) == 2
 
@@ -130,7 +130,7 @@ class TestLoadRules:
             write_rules(project_dir, project_rules)
 
             with patch("platformdirs.user_config_dir", return_value=global_config_dir):
-                _, base_dir = load_rules({"cwd": project_dir})
+                _, base_dir, __ = load_rules({"cwd": project_dir})
 
             assert base_dir == Path(project_dir)
 
@@ -140,6 +140,6 @@ class TestLoadRules:
             (Path(global_config_dir) / "agent-rules.yml").write_text(yaml.dump(global_rules))
 
             with patch("platformdirs.user_config_dir", return_value=global_config_dir):
-                rules, _ = load_rules({"cwd": "/nonexistent/project"})
+                rules, _, __ = load_rules({"cwd": "/nonexistent/project"})
 
             assert rules == global_rules

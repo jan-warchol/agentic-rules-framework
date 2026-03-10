@@ -74,6 +74,7 @@ def load_rules(input_data, rules_path_arg=None):
 
     # --- Project rules ---
     project_rules = None
+    project_path = None
     base_dir = None
 
     if rules_path_arg:
@@ -103,4 +104,13 @@ def load_rules(input_data, rules_path_arg=None):
     # apply to the current project.
     if base_dir is None:
         base_dir = global_config_dir
-    return merged, base_dir
+
+    # Determine the effective rules path for logging (project takes precedence)
+    if rules_path_arg:
+        effective_rules_path = Path(rules_path_arg)
+    elif project_path:
+        effective_rules_path = project_path
+    else:
+        effective_rules_path = global_path
+
+    return merged, base_dir, effective_rules_path

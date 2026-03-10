@@ -1,12 +1,39 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import sys
+import time
+from pathlib import Path
 
 from src.normalize import normalize_input, simplify_tool_call
 from src.rules import load_rules
-from src.check_rules import process_tool_call
+from src.check_rules import process_tool_call, config_path
 from src.io_format import get_tool_format, output_decision
+
+LOG_FILENAME = ".agent-rules-log.jsonl"
+
+
+def write_log(simplified_input, status, reason, rules_path):
+    cwd = os.getcwd()
+    log_entry = {
+        "timestamp": int(time.time()),
+        "script_path": str(Path(__file__).resolve()),
+        "config_path": str(config_path.resolve()),
+        "rules_path": str(rules_path.resolve()) if rules_path else None,
+        "cwd": cwd,
+        "input": {
+            "tool": simplified_input.get("tool"),
+            "path": simplified_input["paths"][0] if simplified_input.get("paths") else None,
+        },
+        "output": {
+            "decision": status,
+            "reason": reason,
+        },
+    }
+    log_path = Path(cwd) / LOG_FILENAME
+    with open(log_path, "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
 
 
 def parse_args():
@@ -30,10 +57,11 @@ if __name__ == "__main__":
     input_data = json.load(sys.stdin)
     tool_format = get_tool_format(input_data, args.tool)
     try:
-        rules, base_dir = load_rules(input_data, args.rules_path)
+        rules, base_dir, rules_path = load_rules(input_data, args.rules_path)
     except FileNotFoundError:
         sys.exit(0)
     simplified = simplify_tool_call(normalize_input(input_data, tool_format))
     status, reason = process_tool_call(simplified, rules, base_dir)
+    write_log(simplified, status, reason, rules_path)
     if status is not None:
         output_decision(status, tool_format, reason=reason)
