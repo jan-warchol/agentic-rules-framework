@@ -74,4 +74,5 @@ def simplify_tool_call(normalized):
         "cwd": normalized["cwd"],
         "command": args.get("command"),
         "paths": paths,
+        "session_id": normalized.get("session_id"),
     }

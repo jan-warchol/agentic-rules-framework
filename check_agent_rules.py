@@ -8,7 +8,7 @@ from pathlib import Path
 
 from src.normalize import normalize_input, simplify_tool_call
 from src.rules import load_rules
-from src.check_rules import process_tool_call, config_path
+from src.check_rules import process_tool_call
 from src.io_format import get_tool_format, output_decision
 
 LOG_FILENAME = ".agent-rules-log.jsonl"
@@ -18,19 +18,20 @@ def write_log(simplified_input, status, reason, rules_path):
     cwd = os.getcwd()
     log_entry = {
         "timestamp": int(time.time()),
-        "script_path": str(Path(__file__).resolve()),
-        "config_path": str(config_path.resolve()),
-        "rules_path": str(rules_path.resolve()) if rules_path else None,
+        "session_id": simplified_input.get("session_id"),
         "cwd": cwd,
-        "input": {
-            "tool": simplified_input.get("tool"),
-            "path": simplified_input["paths"][0] if simplified_input.get("paths") else None,
-        },
-        "output": {
-            "decision": status,
-            "reason": reason,
-        },
+        "rules_path": str(rules_path.resolve()) if rules_path else None,
+        "input": {"tool": simplified_input.get("tool")},
+        "output": {},
     }
+    if simplified_input.get("paths"):
+        log_entry["input"]["paths"] = simplified_input["paths"]
+    if simplified_input.get("command"):
+        log_entry["input"]["command"] = simplified_input["command"]
+    if status:
+        log_entry["output"]["decision"] = status
+        log_entry["output"]["reason"] = reason
+
     log_path = Path(cwd) / LOG_FILENAME
     with open(log_path, "a") as f:
         f.write(json.dumps(log_entry) + "\n")
