@@ -3,8 +3,9 @@ deny_edits:
     reason: Only human can edit the agent rules configuration to ensure compliance.
   - path: tests/protected
     reason: >
-      These files are frozen for edits. Test cases in these files have been carefully
-      validated, and allowing edits could introduce unintended behaviour changes.
+      Files in tests/protected are frozen for edits. Test cases in these files
+      have been carefully validated, and allowing edits could introduce unintended
+      behaviour changes.
 
 # Deny list uses partial matching ("rm -rf" will match "echo test && rm -rf /tmp")
 deny_commands:
@@ -13,13 +14,70 @@ deny_commands:
       When running python tests, prefer running "uv run pytest" without additional
       arguments. It is impractical to list all allowed arguments that can be passed
       to pytest, and allowing arbitrary arguments can lead to unintended consequences.
+  - pattern: ".+ -m pytest.*"
+    reason: >
+      When running python tests, prefer running "uv run pytest" without additional
+      arguments. It is impractical to list all allowed arguments that can be passed
+      to pytest, and allowing arbitrary arguments can lead to unintended consequences.
   - pattern: "git commit"
     reason: >
       Committing changes should be done manually by a human to ensure proper review.
+  - pattern: "cd {cwd}"
+    reason: No need to cd to current directory, you are already there.
+  - pattern: "python3 -m json.tool"
+    reason: >
+      For pretty-printing JSON, use the jq tool instead (which is in allow_commands).
+      It runs without permission prompts and is more efficient for this purpose.
+  - pattern: "python3? (-c |<<)"
+    reason: >
+      Inline Python scripts (both -c and heredoc forms) are a security risk and
+      are hard to review. They also tend to cluster into multiple consecutive
+      permission prompts.
+      For JSON processing, use jq (which is in allow_commands).
+      For file inspection, use the Read and Grep tools directly — they require
+      no permission prompts at all.
+  - pattern: pytest .*| tail
+    reason: Redundant - pytest output is already limited.
+  - pattern: "cat >\\s*/tmp/"
+    reason: >
+      Writing scripts to /tmp triggers a permission prompt for writing outside the
+      project directory. For JSON log analysis, use jq directly (it's in
+      allow_commands and runs without prompts). For file inspection, use the Read
+      and Grep tools — also prompt-free.
+  - pattern: "&& echo .* &&"
+    reason: >
+      Using echo as a separator between chained commands is unnecessary and can trigger
+      unwanted permission prompts. Run each command as a separate tool call instead.
+  - pattern: "^grep "
+    reason: >
+      Use the Grep tool instead of running grep via Bash — it requires no permission
+      prompts. The Grep tool supports regex patterns, glob file filters, context
+      lines, and output modes (content/files/count).
+  - pattern: "^#"
+    reason: >
+      Don't start Bash commands with a # comment line — put the description
+      in the Bash tool's 'description' parameter instead. Comment lines
+      introduce newlines that trigger permission prompts.
+
+  - pattern: "\\\\\n"
+    reason: >
+      Don't use backslash line continuation in Bash commands — write the
+      full pipeline on a single line instead. Multi-line commands trigger
+      permission prompts due to the newline check.
+
+  - pattern: "jq .* '[^']*\"[^']*\"[^']*'"
+    reason: >
+      Avoid embedding quoted string literals inside jq filter expressions —
+      they trigger a 'consecutive quotes' security heuristic. Use --arg or
+      --argjson to pass values externally instead:
+        GOOD: jq --arg v "PreToolUse" 'select(.hook_event_name == $v)'
+        BAD:  jq 'select(.hook_event_name == "PreToolUse")'
+
 
 # Allow list uses full matching (anchors ^ and $ are implied)
 allow_commands:
   - pattern: uv run pytest
+  - pattern: "jq .*"
 
 # confirm_commands:
 #   - pattern: "git push.*"
