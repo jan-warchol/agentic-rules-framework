@@ -3,7 +3,9 @@
 import json
 import os
 
-from .normalize import VSCODE_COPILOT, COPILOT_CLI, CLAUDE_CODE
+VSCODE_COPILOT = "vscode-copilot"
+COPILOT_CLI = "copilot-cli"
+CLAUDE_CODE = "claude-code"
 
 
 def get_tool_format(entry, tool_arg=None):

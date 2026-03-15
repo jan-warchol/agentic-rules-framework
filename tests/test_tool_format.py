@@ -4,8 +4,8 @@
 import json
 import pytest
 
-from src.normalize import normalize_input, simplify_tool_call, VSCODE_COPILOT, COPILOT_CLI
-from src.io_format import get_tool_format, output_decision
+from src.normalize import normalize_input, simplify_tool_call
+from src.io_format import get_tool_format, output_decision, VSCODE_COPILOT, COPILOT_CLI
 
 
 # --- Sample input data ---
@@ -28,36 +28,36 @@ COPILOT_CLI_ENTRY = {
 
 class TestNormalizeToolCall:
     def test_vscode_extracts_tool_name_and_args(self):
-        result = normalize_input(VSCODE_ENTRY, VSCODE_COPILOT)
+        result = normalize_input(VSCODE_ENTRY)
         assert result["tool"] == "run_in_terminal"
         assert result["args"] == {"command": "echo hello"}
         assert result["cwd"] == "/some/path"
 
     def test_copilot_cli_parses_json_args(self):
-        result = normalize_input(COPILOT_CLI_ENTRY, COPILOT_CLI)
+        result = normalize_input(COPILOT_CLI_ENTRY)
         assert result["tool"] == "bash"
         assert result["args"]["command"] == "echo hello"
         assert result["cwd"] == "/some/path"
 
     def test_copilot_cli_explicit_format(self):
-        result = normalize_input(COPILOT_CLI_ENTRY, tool_format=COPILOT_CLI)
+        result = normalize_input(COPILOT_CLI_ENTRY)
         assert result["tool"] == "bash"
 
     def test_vscode_explicit_format(self):
-        result = normalize_input(VSCODE_ENTRY, tool_format=VSCODE_COPILOT)
+        result = normalize_input(VSCODE_ENTRY)
         assert result["tool"] == "run_in_terminal"
 
 
 class TestSimplifyToolCall:
     def test_extracts_command(self):
-        normalized = normalize_input(VSCODE_ENTRY, VSCODE_COPILOT)
+        normalized = normalize_input(VSCODE_ENTRY)
         result = simplify_tool_call(normalized)
         assert result["tool"] == "run_in_terminal"
         assert result["command"] == "echo hello"
         assert result["cwd"] == "/some/path"
 
     def test_copilot_cli_extracts_command(self):
-        normalized = normalize_input(COPILOT_CLI_ENTRY, COPILOT_CLI)
+        normalized = normalize_input(COPILOT_CLI_ENTRY)
         result = simplify_tool_call(normalized)
         assert result["command"] == "echo hello"
 
@@ -68,9 +68,9 @@ class TestSimplifyToolCall:
             "toolArgs": '{"path": "/some/file.py", "old_str": "x", "new_str": "y"}',
             "cwd": "/some/path",
         }
-        result = simplify_tool_call(normalize_input(entry, COPILOT_CLI))
+        result = simplify_tool_call(normalize_input(entry))
         assert result["tool"] == "edit"
-        assert result["paths"] == ["/some/file.py"]
+        assert result["path"] == "/some/file.py"
 
 
 class TestGetToolFormat:

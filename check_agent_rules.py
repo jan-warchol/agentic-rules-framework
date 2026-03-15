@@ -18,14 +18,14 @@ def write_log(simplified_input, status, reason, rules_path):
     cwd = os.getcwd()
     log_entry = {
         "timestamp": int(time.time()),
-        "session_id": simplified_input.get("session_id"),
+        "session_id": simplified_input.get("session"),
         "cwd": cwd,
         "rules_path": str(rules_path.resolve()) if rules_path else None,
         "input": {"tool": simplified_input.get("tool")},
         "output": {},
     }
-    if simplified_input.get("paths"):
-        log_entry["input"]["paths"] = simplified_input["paths"]
+    if simplified_input.get("path"):
+        log_entry["input"]["path"] = simplified_input["path"]
     if simplified_input.get("command"):
         log_entry["input"]["command"] = simplified_input["command"]
     if status:
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         rules, base_dir, rules_path = load_rules(input_data, args.rules_path)
     except FileNotFoundError:
         sys.exit(0)
-    simplified = simplify_tool_call(normalize_input(input_data, tool_format))
+    simplified = simplify_tool_call(normalize_input(input_data))
     status, reason = process_tool_call(simplified, rules, base_dir)
     write_log(simplified, status, reason, rules_path)
     if status is not None:
