@@ -1,9 +1,9 @@
 deny_edits:
   - path: agent-rules.yaml
     reason: Only human can edit the agent rules configuration to ensure compliance.
-  - path: tests/test_command_permissions.py
+  - path: tests/protected
     reason: >
-      This file is frozen for edits. Test cases in this file have been carefully
+      These files are frozen for edits. Test cases in these files have been carefully
       validated, and allowing edits could introduce unintended behaviour changes.
 
 # Deny list uses partial matching ("rm -rf" will match "echo test && rm -rf /tmp")
