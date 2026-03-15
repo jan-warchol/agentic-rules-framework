@@ -1,0 +1,5 @@
+{"timestamp":1771453219699,"cwd":"/sample/project","toolName":"edit","toolArgs":"{\"path\": \"/sample/project/README.md\", \"old_str\": \"foo\", \"new_str\": \"foo\\nbar\"}"}
+{"timestamp":1771452890259,"cwd":"/sample/project","toolName":"view","toolArgs":"{\"path\": \"/sample/project/README.md\"}"}
+{"timestamp":1771453162894,"cwd":"/sample/project","toolName":"report_intent","toolArgs":"{\"intent\": \"Updating README\"}"}
+{"timestamp":1771453166054,"cwd":"/sample/project","toolName":"grep","toolArgs":"{\"pattern\": \"bar\", \"output_mode\": \"content\", \"-n\": true}"}
+{"timestamp":1771453350175,"cwd":"/sample/project","toolName":"bash","toolArgs":"{\"command\": \"tail -1 /sample/project/README.md\", \"description\": \"Get last line of README\"}"}

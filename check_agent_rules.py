@@ -9,7 +9,7 @@ from pathlib import Path
 from src.normalize import normalize_input, simplify_tool_call
 from src.rules import load_rules
 from src.check_rules import process_tool_call, config_path
-from src.io_format import get_tool_format, output_decision
+from src.platform_specific import detect_platform, format_decision_output
 
 LOG_FILENAME = ".agent-rules-log.jsonl"
 
@@ -45,23 +45,20 @@ def parse_args():
         nargs="?",
         help="Path to agent-rules.yaml (default: auto-detect from cwd)",
     )
-    parser.add_argument(
-        "--tool",
-        help="Tool format to use: 'claude-code', 'vscode-copilot' or 'copilot-cli' (default: auto-detect)",
-    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     input_data = json.load(sys.stdin)
-    tool_format = get_tool_format(input_data, args.tool)
+    platform = detect_platform(input_data, os.environ)
     try:
         rules, base_dir, rules_path = load_rules(input_data, args.rules_path)
     except FileNotFoundError:
         sys.exit(0)
-    simplified = simplify_tool_call(normalize_input(input_data, tool_format))
+    simplified = simplify_tool_call(normalize_input(input_data, platform))
     status, reason = process_tool_call(simplified, rules, base_dir)
     write_log(simplified, status, reason, rules_path)
     if status is not None:
-        output_decision(status, tool_format, reason=reason)
+        output = format_decision_output(platform, status, reason=reason)
+        print(json.dumps(output))
