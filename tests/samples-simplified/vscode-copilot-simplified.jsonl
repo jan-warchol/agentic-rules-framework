@@ -1,0 +1,7 @@
+{"cwd": "/sample/project/.github/hooks", "session": "da7373bd-446f-40bf-99f3-62a50f30875a", "tool": "replace_string_in_file", "paths": ["/sample/project/deploy.sh"]}
+{"cwd": "/sample/project/.github/hooks", "session": "da7373bd-446f-40bf-99f3-62a50f30875a", "tool": "read_file", "paths": ["/sample/project/deploy.sh"]}
+{"cwd": "/sample/project/.github/hooks", "session": "da7373bd-446f-40bf-99f3-62a50f30875a", "tool": "grep_search"}
+{"cwd": "/sample/project/.github/hooks", "session": "1690f526-40b8-4fd9-96e5-a0486db8bd24", "tool": "run_in_terminal", "command": "chmod +x /sample/project/.github/hooks/normalize-jsonl.py"}
+{"cwd": "/sample/project/.github/hooks", "session": "b53d9cb2-da0a-4fab-8dbf-c185d733d0e6", "tool": "list_dir", "paths": ["/sample/project/.github/hooks"]}
+{"cwd": "/sample/project/.github/hooks", "session": "b53d9cb2-da0a-4fab-8dbf-c185d733d0e6", "tool": "create_file", "paths": ["/sample/project/.github/hooks/convert-to-format2.py"]}
+{"cwd": "/sample/project/.github/logs", "session": "5071d89b-bb28-47f0-a4d7-29eaa1e8cdfb", "tool": "multi_replace_string_in_file", "paths": ["/home/jan/src/jan-warchol/agentic-harness/convert_prompts.py", "/home/jan/src/jan-warchol/agentic-harness/convert_tools.py"]}

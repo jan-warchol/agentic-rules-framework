@@ -1,0 +1,5 @@
+{"cwd": "/sample/project", "session": null, "tool": "edit", "paths": ["/sample/project/README.md"]}
+{"cwd": "/sample/project", "session": null, "tool": "view", "paths": ["/sample/project/README.md"]}
+{"cwd": "/sample/project", "session": null, "tool": "report_intent"}
+{"cwd": "/sample/project", "session": null, "tool": "grep"}
+{"cwd": "/sample/project", "session": null, "tool": "bash", "command": "tail -1 /sample/project/README.md"}

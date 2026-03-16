@@ -1,0 +1,8 @@
+{"cwd": "/sample/project", "session": "a98fd457-db4a-480d-a424-c5a4d4d239c2", "tool": "Bash", "command": "ls /sample/project && cat /sample/project/README.md 2>/dev/null || echo \"No README\""}
+{"cwd": "/sample/project", "session": "21593695-1505-40a5-8203-188de9fb8a1c", "tool": "Bash", "command": "# Check hook_event_name values\ncat /sample/project/logs-normalized/*.jsonl | jq -r 'select(.hook_event_name) | .hook_event_name' | sort | uniq -c"}
+{"cwd": "/sample/project", "session": "0d4c813a-2a8b-4428-b219-36cd7b4af74d", "tool": "Read", "paths": ["/sample/project/tests/test_tool_format.py"]}
+{"cwd": "/sample/project", "session": "0d4c813a-2a8b-4428-b219-36cd7b4af74d", "tool": "Edit", "paths": ["/sample/project/tests/test_tool_format.py"]}
+{"cwd": "/sample/project", "session": "a98fd457-db4a-480d-a424-c5a4d4d239c2", "tool": "Grep", "paths": ["/sample/project/agent-rules.yaml"]}
+{"cwd": "/sample/project", "session": "0d4c813a-2a8b-4428-b219-36cd7b4af74d", "tool": "Grep"}
+{"cwd": "/sample/project", "session": "0d4c813a-2a8b-4428-b219-36cd7b4af74d", "tool": "Glob", "paths": ["/sample/project"]}
+{"cwd": "/sample/project", "session": "21593695-1505-40a5-8203-188de9fb8a1c", "tool": "Write", "paths": ["/home/jan/.claude/projects/-sample-project/memory/MEMORY.md"]}
