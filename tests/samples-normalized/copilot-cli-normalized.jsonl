@@ -1,0 +1,5 @@
+{"timestamp": 1771453219699, "cwd": "/sample/project", "tool": "edit", "args": {"path": "/sample/project/README.md", "old_str": "foo", "new_str": "foo\nbar"}}
+{"timestamp": 1771452890259, "cwd": "/sample/project", "tool": "view", "args": {"path": "/sample/project/README.md"}}
+{"timestamp": 1771453162894, "cwd": "/sample/project", "tool": "report_intent", "args": {"intent": "Updating README"}}
+{"timestamp": 1771453166054, "cwd": "/sample/project", "tool": "grep", "args": {"pattern": "bar", "output_mode": "content", "-n": true}}
+{"timestamp": 1771453350175, "cwd": "/sample/project", "tool": "bash", "args": {"command": "tail -1 /sample/project/README.md", "description": "Get last line of README"}}
