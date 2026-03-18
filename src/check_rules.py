@@ -28,7 +28,7 @@ def check_command(command, rules, cwd=None):
         cwd: Current working directory, used to resolve {cwd} in patterns
 
     Returns:
-        Tuple of (status, reason): status is 'deny', 'allow', 'ask', or None; reason is str or None
+        Tuple of (decision, reason): decision is 'deny', 'allow', 'ask', or None; reason is str or None
     """
     if not command:
         return None, None
@@ -67,7 +67,7 @@ def check_path(file_path, deny_list, base_dir):
         base_dir: Reference directory for resolving relative paths
 
     Returns:
-        Tuple of (status, reason): status is 'deny' or None, reason is str or None
+        Tuple of (decision, reason): decision is 'deny' or None, reason is str or None
     """
     if not file_path:
         return None, None
@@ -106,13 +106,13 @@ def check_paths(paths, rules, base_dir):
     """Check a list of paths against deny_edits rules.
 
     Returns:
-        Tuple of (status, reason): status is 'deny' or None
+        Tuple of (decision, reason): decision is 'deny' or None
     """
     deny_list = rules.get("deny_edits", [])
     for path in paths:
-        status, reason = check_path(path, deny_list, base_dir)
-        if status == "deny":
-            return status, reason
+        decision, reason = check_path(path, deny_list, base_dir)
+        if decision == "deny":
+            return decision, reason
     return None, None
 
 
@@ -120,11 +120,13 @@ def process_tool_call(tool_input, rules, base_dir):
     """Check a tool call against command and path rules.
 
     Returns:
-        Tuple of (status, reason): status is 'deny', 'allow', 'ask', or None
+        Tuple of (decision, reason): decision is 'deny', 'allow', 'ask', or None
     """
     tool_name = tool_input.get("tool")
     if tool_name in COMMAND_TOOLS:
-        return check_command(tool_input.get("command") or "", rules, cwd=tool_input.get("cwd"))
+        return check_command(
+            tool_input.get("command") or "", rules, cwd=tool_input.get("cwd")
+        )
     if tool_name in EDITING_TOOLS:
         return check_paths(tool_input.get("paths", []), rules, base_dir)
     return None, None

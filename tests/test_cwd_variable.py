@@ -9,55 +9,55 @@ class TestCwdVariable:
     def test_cwd_substituted_in_deny_pattern(self):
         rules = {"deny_commands": [{"pattern": r"^cd {cwd} &&.*", "reason": "Redundant cd"}]}
 
-        status, reason = check_command("cd /my/project && pytest", rules, cwd="/my/project")
+        decision, reason = check_command("cd /my/project && pytest", rules, cwd="/my/project")
 
-        assert status == "deny"
+        assert decision == "deny"
         assert reason == "Redundant cd"
 
     def test_cwd_not_matched_when_different_path(self):
         rules = {"deny_commands": [{"pattern": r"^cd {cwd} &&.*"}]}
 
-        status, _ = check_command("cd /other/path && pytest", rules, cwd="/my/project")
+        decision, _ = check_command("cd /other/path && pytest", rules, cwd="/my/project")
 
-        assert status is None
+        assert decision is None
 
     def test_cwd_substituted_in_allow_pattern(self):
         rules = {"allow_commands": [{"pattern": r"cd {cwd} && pytest.*"}]}
 
-        status, _ = check_command("cd /my/project && pytest -v", rules, cwd="/my/project")
+        decision, _ = check_command("cd /my/project && pytest -v", rules, cwd="/my/project")
 
-        assert status == "allow"
+        assert decision == "allow"
 
     def test_cwd_substituted_in_confirm_pattern(self):
         rules = {"confirm_commands": [{"pattern": r"cd {cwd} && git push.*"}]}
 
-        status, _ = check_command("cd /my/project && git push", rules, cwd="/my/project")
+        decision, _ = check_command("cd /my/project && git push", rules, cwd="/my/project")
 
-        assert status == "ask"
+        assert decision == "ask"
 
     def test_cwd_with_special_regex_chars_in_path(self):
         """Dots and other special chars in cwd path are treated as literals."""
         rules = {"deny_commands": [{"pattern": r"^cd {cwd}.*"}]}
 
         # Should match the literal path (dot is not a wildcard)
-        status, _ = check_command("cd /my/proj.ect/foo && ls", rules, cwd="/my/proj.ect")
-        assert status == "deny"
+        decision, _ = check_command("cd /my/proj.ect/foo && ls", rules, cwd="/my/proj.ect")
+        assert decision == "deny"
 
         # Should NOT match a path where dot acts as a wildcard
-        status, _ = check_command("cd /my/projXect/foo && ls", rules, cwd="/my/proj.ect")
-        assert status is None
+        decision, _ = check_command("cd /my/projXect/foo && ls", rules, cwd="/my/proj.ect")
+        assert decision is None
 
     def test_no_cwd_provided_leaves_pattern_unchanged(self):
         """Without cwd, {cwd} in pattern is left as-is and won't match normal commands."""
         rules = {"deny_commands": [{"pattern": r"^cd {cwd}.*"}]}
 
-        status, _ = check_command("cd /some/path && ls", rules, cwd=None)
+        decision, _ = check_command("cd /some/path && ls", rules, cwd=None)
 
-        assert status is None
+        assert decision is None
 
     def test_pattern_without_cwd_variable_unaffected(self):
         rules = {"deny_commands": [{"pattern": "rm -rf"}]}
 
-        status, _ = check_command("rm -rf /tmp", rules, cwd="/my/project")
+        decision, _ = check_command("rm -rf /tmp", rules, cwd="/my/project")
 
-        assert status == "deny"
+        assert decision == "deny"

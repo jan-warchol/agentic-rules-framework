@@ -13,9 +13,9 @@ class TestDeniedCommands:
         """Denied pattern by default matches anywhere in command."""
         rules = {"deny_commands": [{"pattern": "rm -rf", "reason": "Dangerous"}]}
 
-        status, reason = check_command("echo 'test' && rm -rf /tmp", rules)
+        decision, reason = check_command("echo 'test' && rm -rf /tmp", rules)
 
-        assert status == "deny"
+        assert decision == "deny"
         assert reason == "Dangerous"
 
     def test_denied_exact_match(self):
@@ -24,9 +24,9 @@ class TestDeniedCommands:
             "deny_commands": [{"pattern": "^rm -rf /$", "reason": "Root deletion"}]
         }
 
-        status, reason = check_command("rm -rf /tmp", rules)
+        decision, reason = check_command("rm -rf /tmp", rules)
 
-        assert status is None  # Not denied because pattern does not match exactly
+        assert decision is None  # Not denied because pattern does not match exactly
         assert reason is None
 
     def test_denied_priority_over_allowed(self):
@@ -36,9 +36,9 @@ class TestDeniedCommands:
             "allow_commands": [{"pattern": "git push.*"}],
         }
 
-        status, reason = check_command("git push origin main", rules)
+        decision, reason = check_command("git push origin main", rules)
 
-        assert status == "deny"
+        assert decision == "deny"
         assert reason == "No pushing"
 
 
@@ -58,20 +58,20 @@ class TestAllowedCommands:
     """Test mechanism for allowing commands. It should check for full match."""
 
     def test_exact_match(self, exact_rules):
-        status, _ = check_command("git push", exact_rules)
-        assert status == "allow"
+        decision, _ = check_command("git push", exact_rules)
+        assert decision == "allow"
 
     def test_exact_no_match(self, exact_rules):
-        status, _ = check_command("git push upstream feature", exact_rules)
-        assert status is None
+        decision, _ = check_command("git push upstream feature", exact_rules)
+        assert decision is None
 
     def test_wildcard_match(self, wildcard_rules):
-        status, _ = check_command("git commit -a", wildcard_rules)
-        assert status == "allow"
+        decision, _ = check_command("git commit -a", wildcard_rules)
+        assert decision == "allow"
 
     def test_wildcard_no_match(self, wildcard_rules):
-        status, _ = check_command("GIT_AUTHOR=impostor git commit -a", wildcard_rules)
-        assert status is None
+        decision, _ = check_command("GIT_AUTHOR=impostor git commit -a", wildcard_rules)
+        assert decision is None
 
 
 class TestConfirmCommands:
@@ -88,9 +88,9 @@ class TestConfirmCommands:
             ]
         }
 
-        status, reason = check_command("rm -rf /tmp/test", rules)
+        decision, reason = check_command("rm -rf /tmp/test", rules)
 
-        assert status == "ask"
+        assert decision == "ask"
         assert reason == "Destructive operation"
 
     def test_confirm_priority_over_allowed(self):
@@ -100,17 +100,17 @@ class TestConfirmCommands:
             "confirm_commands": [{"pattern": "git push.*--force.*"}],
         }
 
-        status, _ = check_command("git push --force", rules)
+        decision, _ = check_command("git push --force", rules)
 
-        assert status == "ask"
+        assert decision == "ask"
 
     def test_confirm_no_match(self):
         """Test that unmatched command returns None."""
         rules = {"confirm_commands": [{"pattern": "rm -rf.*"}]}
 
-        status, reason = check_command("ls -la", rules)
+        decision, reason = check_command("ls -la", rules)
 
-        assert status is None
+        assert decision is None
         assert reason is None
 
 
@@ -122,17 +122,17 @@ class TestPartialRules:
         rules = {"deny_commands": [{"pattern": "rm -rf", "reason": "Dangerous"}]}
 
         # Should deny matching command
-        status, reason = check_command("rm -rf /tmp", rules)
-        assert status == "deny"
+        decision, reason = check_command("rm -rf /tmp", rules)
+        assert decision == "deny"
         assert reason == "Dangerous"
 
         # Should return None for non-matching command
-        status, reason = check_command("ls -la", rules)
-        assert status is None
+        decision, reason = check_command("ls -la", rules)
+        assert decision is None
         assert reason is None
 
     def test_empty_rules(self):
         """Test with completely empty rules - should return none for any command."""
-        status, reason = check_command("any command", {})
-        assert status is None
+        decision, reason = check_command("any command", {})
+        assert decision is None
         assert reason is None
