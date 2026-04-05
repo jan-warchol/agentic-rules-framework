@@ -1,6 +1,7 @@
 """Hook input normalization and simplification."""
 
 import json
+import time
 from datetime import datetime
 
 
@@ -46,10 +47,16 @@ def normalize_input(hook_input):
     _normalize_field(result, "tool", ["toolName", "tool_name"])
     _normalize_field(result, "args", ["toolArgs", "tool_input"])
 
-    # Convert timestamp from string to integer if needed
-    if "timestamp" in result and isinstance(result["timestamp"], str):
+    # Ensure timestamp is present as an integer Unix timestamp, and first
+    if "timestamp" not in result:
+        ts = int(time.time())
+    elif isinstance(result["timestamp"], str):
         dt = datetime.fromisoformat(result["timestamp"].replace("Z", "+00:00"))
-        result["timestamp"] = int(dt.timestamp())
+        ts = int(dt.timestamp())
+        del result["timestamp"]
+    else:
+        ts = result.pop("timestamp")
+    result = {"timestamp": ts, **result}
 
     # Parse JSON string args if needed and normalize field names
     if "args" in result:

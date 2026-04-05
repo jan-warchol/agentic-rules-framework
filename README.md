@@ -109,6 +109,23 @@ The script `check_agent_rules.py` has a simple sructure:
 - check normalized input against the rules
 - wrap decision in format appropriate for the agent.
 
+## Logging
+
+Tool use decisions are logged to `.claude-sessions/permission-logs.jsonl` in the
+directory where you run the agent.
+
+To consolidate logs from multiple projects into a single location, set
+`logs_base_dir` in `~/.config/agentic-rules-framework/config.json`:
+
+```json
+{
+  "logs_base_dir": "/home/user/agent-logs"
+}
+```
+
+Each project will get its own subdirectory under that path (named after the
+project's path). The value must be an absolute path.
+
 ## Future roadmap
 
 - defining post-tool hooks (run linter, tests and let the agent fix the code
