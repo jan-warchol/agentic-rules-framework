@@ -4,10 +4,11 @@ import time
 from pathlib import Path
 
 import platformdirs
+from src.check_rules import extract_paths_from_command
 
 APP_NAME = "agentic-rules-framework"
 LOG_SUBDIR = ".claude-sessions"
-LOG_FILENAME = "permission-logs.jsonl"
+LOG_FILENAME = "permission-events.jsonl"
 
 
 def _load_config() -> dict:
@@ -46,6 +47,7 @@ def get_log_dir(cwd: str) -> Path:
     return log_dir
 
 
+
 def write_entry(path: Path, entry: dict) -> None:
     with open(path, "a") as f:
         f.write(json.dumps(entry, separators=(",", ":")) + "\n")
@@ -65,7 +67,11 @@ def write_log(simplified_input, decision, reason, matched_patterns, rules_path):
     if "paths" in simplified_input:
         log_entry["input"]["paths"] = simplified_input["paths"]
     if "command" in simplified_input:
-        log_entry["input"]["command"] = simplified_input["command"]
+        command = simplified_input["command"]
+        log_entry["input"]["command"] = command
+        command_paths = extract_paths_from_command(command)
+        if command_paths:
+            log_entry["input"]["paths"] = command_paths
     if decision:
         log_entry["output"]["decision"] = decision
         log_entry["output"]["reason"] = reason

@@ -1,6 +1,7 @@
 """Hook to check tool usage and deny certain operations."""
 
 import re
+import shlex
 from pathlib import Path
 import yaml
 
@@ -138,8 +139,20 @@ def check_paths(paths, rules, base_dir):
     return None, None, []
 
 
+def extract_paths_from_command(command: str) -> list:
+    """Return tokens from command that correspond to existing filesystem paths."""
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        tokens = command.split()
+    return [t for t in tokens if Path(t).exists()]
+
+
 def process_tool_call(tool_input, rules, base_dir):
     """Check a tool call against command and path rules.
+
+    For command tools, also extracts any existing filesystem paths from the
+    command tokens and checks them against deny_edits rules.
 
     Returns:
         Tuple of (decision, reason, matched_patterns): decision is 'deny', 'allow', 'ask', or None;
@@ -147,9 +160,32 @@ def process_tool_call(tool_input, rules, base_dir):
     """
     tool_name = tool_input.get("tool")
     if tool_name in COMMAND_TOOLS:
-        return check_command(
-            tool_input.get("command") or "", rules, cwd=tool_input.get("cwd")
+        command = tool_input.get("command") or ""
+        cmd_decision, cmd_reason, cmd_patterns = check_command(
+            command, rules, cwd=tool_input.get("cwd")
         )
+
+        paths_in_command = extract_paths_from_command(command)
+        path_decision, path_reason, path_patterns = check_paths(
+            paths_in_command, rules, base_dir
+        )
+
+        if cmd_decision == "deny" or path_decision == "deny":
+            all_reasons = []
+            all_patterns = []
+            if cmd_decision == "deny":
+                if cmd_reason:
+                    all_reasons.append(cmd_reason)
+                all_patterns.extend(cmd_patterns)
+            if path_decision == "deny":
+                if path_reason:
+                    all_reasons.append(path_reason)
+                all_patterns.extend(path_patterns)
+            combined_reason = "\n\n".join(all_reasons) if all_reasons else None
+            return "deny", combined_reason, all_patterns
+
+        return cmd_decision, cmd_reason, cmd_patterns
+
     if tool_name in EDITING_TOOLS:
         return check_paths(tool_input.get("paths", []), rules, base_dir)
     return None, None, []
