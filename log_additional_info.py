@@ -75,7 +75,7 @@ def open_tty() -> tuple[int, object, list]:
     return fd, tty_file, old_settings
 
 
-def run_loop(fd: int, log_file: Path) -> None:
+def run_loop(fd: int, log_file: Path, note_type: str) -> None:
     cwd = str(Path.cwd())
     print(PROMPT, file=sys.stderr)
     while True:
@@ -94,8 +94,9 @@ def run_loop(fd: int, log_file: Path) -> None:
             "timestamp": int(time.time()),
             **session_ctx,
             "cwd": cwd,
-            "event": "ManualNote",
-            "what_was_the_problem": text,
+            "event": "AdditionalInfo",
+            "info_type": note_type,
+            "content": text,
         }
         write_entry(log_file, entry)
 
@@ -105,13 +106,17 @@ def run_loop(fd: int, log_file: Path) -> None:
 
 
 if __name__ == "__main__":
+    note_type = (
+        sys.argv[1] if len(sys.argv) == 2 else "what caused the permission prompt"
+    )
+
     log_dir = get_log_dir(os.getcwd())
     log_file = log_dir / LOG_FILENAME
 
     print(f"Logging to: {log_file}", file=sys.stderr)
     fd, tty_file, old_settings = open_tty()
     try:
-        run_loop(fd, log_file)
+        run_loop(fd, log_file, note_type)
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         tty_file.close()
