@@ -74,8 +74,20 @@ def open_tty() -> tuple[int, object, list]:
     return fd, tty_file, old_settings
 
 
-def run_loop(fd: int, log_file: Path, question: str) -> None:
-    cwd = str(Path.cwd())
+def _save_entry(log_file: Path, question: str, text: str) -> None:
+    entry = {
+        "timestamp": int(time.time()),
+        **get_session_context(log_file),
+        "cwd": str(Path.cwd()),
+        "event": "AdditionalInfo",
+        "question": question,
+        "answer": text,
+    }
+    write_entry(log_file, entry)
+
+
+def run_auto_loop(fd: int, log_file: Path, question: str) -> None:
+    """Auto-submit mode: paste text, saved after 100ms silence."""
     prompt = "Provide additional info - " + question
     print(prompt, file=sys.stderr)
     while True:
@@ -89,34 +101,57 @@ def run_loop(fd: int, log_file: Path, question: str) -> None:
             continue
 
         print(text, file=sys.stderr)
-        session_ctx = get_session_context(log_file)
-        entry = {
-            "timestamp": int(time.time()),
-            **session_ctx,
-            "cwd": cwd,
-            "event": "AdditionalInfo",
-            "question": question,
-            "answer": text,
-        }
-        write_entry(log_file, entry)
-
+        _save_entry(log_file, question, text)
         print("\nSaved.", file=sys.stderr)
         print(prompt, file=sys.stderr)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        question = "why the permission prompt appeared?"
-    else:
-        question = sys.argv[1]
+def run_interactive_loop(log_file: Path, question: str) -> None:
+    """Interactive mode: type input, confirm with Enter."""
+    try:
+        tty_text = open("/dev/tty", "r")
+    except OSError:
+        print("Error: no controlling terminal found.", file=sys.stderr)
+        sys.exit(1)
 
+    prompt = "Provide additional info - " + question + "\n> "
+    try:
+        while True:
+            try:
+                print(prompt, end="", file=sys.stderr)
+                sys.stderr.flush()
+                text = tty_text.readline()
+            except KeyboardInterrupt:
+                print("\nQuitting.", file=sys.stderr)
+                break
+
+            if not text:  # EOF (Ctrl-D)
+                print("\nQuitting.", file=sys.stderr)
+                break
+
+            text = text.strip()
+            if not text:
+                continue
+
+            _save_entry(log_file, question, text)
+            print("Saved.", file=sys.stderr)
+    finally:
+        tty_text.close()
+
+
+if __name__ == "__main__":
     log_dir = get_log_dir(os.getcwd())
     log_file = log_dir / LOG_FILENAME
-
     print(f"Logging to: {log_file}", file=sys.stderr)
-    fd, tty_file, old_settings = open_tty()
-    try:
-        run_loop(fd, log_file, question)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        tty_file.close()
+
+    if len(sys.argv) < 2:
+        question = "why the permission prompt appeared?"
+        fd, tty_file, old_settings = open_tty()
+        try:
+            run_auto_loop(fd, log_file, question)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            tty_file.close()
+    else:
+        question = sys.argv[1]
+        run_interactive_loop(log_file, question)
