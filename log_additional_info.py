@@ -35,7 +35,6 @@ def get_session_context(events_file: Path) -> dict:
 
 
 TIMEOUT = 0.1  # seconds of silence before auto-submitting
-PROMPT = "Paste additional information about permission request (Ctrl-C to quit):"
 
 
 def read_entry(fd: int) -> str | None:
@@ -75,9 +74,10 @@ def open_tty() -> tuple[int, object, list]:
     return fd, tty_file, old_settings
 
 
-def run_loop(fd: int, log_file: Path, note_type: str) -> None:
+def run_loop(fd: int, log_file: Path, question: str) -> None:
     cwd = str(Path.cwd())
-    print(PROMPT, file=sys.stderr)
+    prompt = "Provide additional info - " + question
+    print(prompt, file=sys.stderr)
     while True:
         text = read_entry(fd)
 
@@ -95,20 +95,20 @@ def run_loop(fd: int, log_file: Path, note_type: str) -> None:
             **session_ctx,
             "cwd": cwd,
             "event": "AdditionalInfo",
-            "info_type": note_type,
-            "content": text,
+            "question": question,
+            "answer": text,
         }
         write_entry(log_file, entry)
 
-        session_id = session_ctx.get("session", "unknown")
-        print(f"\nSaved (session {session_id}).", file=sys.stderr)
-        print(PROMPT, file=sys.stderr)
+        print("\nSaved.", file=sys.stderr)
+        print(prompt, file=sys.stderr)
 
 
 if __name__ == "__main__":
-    note_type = (
-        sys.argv[1] if len(sys.argv) == 2 else "what caused the permission prompt"
-    )
+    if len(sys.argv) < 2:
+        question = "why the permission prompt appeared?"
+    else:
+        question = sys.argv[1]
 
     log_dir = get_log_dir(os.getcwd())
     log_file = log_dir / LOG_FILENAME
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     print(f"Logging to: {log_file}", file=sys.stderr)
     fd, tty_file, old_settings = open_tty()
     try:
-        run_loop(fd, log_file, note_type)
+        run_loop(fd, log_file, question)
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         tty_file.close()

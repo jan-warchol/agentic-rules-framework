@@ -34,7 +34,7 @@ def process_event(event: dict) -> dict | None:
             event["args"].pop(key, None)
 
     entry = {k: v for k, v in event.items() if k not in DROP_KEYS}
-    first_keys = ["timestamp", "session", "cwd", "event"]
+    first_keys = ["timestamp", "session", "cwd", "event", "tool", "args"]
     return {k: entry[k] for k in first_keys if k in entry} | {
         k: v for k, v in entry.items() if k not in first_keys
     }
