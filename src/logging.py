@@ -51,7 +51,7 @@ def write_entry(path: Path, entry: dict) -> None:
         f.write(json.dumps(entry, separators=(",", ":")) + "\n")
 
 
-def write_log(simplified_input, decision, reason, rules_path):
+def write_log(simplified_input, decision, reason, matched_patterns, rules_path):
     cwd = simplified_input.get("cwd") or os.getcwd()
     log_entry = {
         "timestamp": int(time.time()),
@@ -69,6 +69,7 @@ def write_log(simplified_input, decision, reason, rules_path):
     if decision:
         log_entry["output"]["decision"] = decision
         log_entry["output"]["reason"] = reason
+        log_entry["output"]["rules_matched"] = matched_patterns
 
     log_dir = get_log_dir(cwd)
     write_entry(log_dir / LOG_FILENAME, log_entry)

@@ -13,7 +13,7 @@ class TestDeniedCommands:
         """Denied pattern by default matches anywhere in command."""
         rules = {"deny_commands": [{"pattern": "rm -rf", "reason": "Dangerous"}]}
 
-        decision, reason = check_command("echo 'test' && rm -rf /tmp", rules)
+        decision, reason, _ = check_command("echo 'test' && rm -rf /tmp", rules)
 
         assert decision == "deny"
         assert reason == "Dangerous"
@@ -24,7 +24,7 @@ class TestDeniedCommands:
             "deny_commands": [{"pattern": "^rm -rf /$", "reason": "Root deletion"}]
         }
 
-        decision, reason = check_command("rm -rf /tmp", rules)
+        decision, reason, _ = check_command("rm -rf /tmp", rules)
 
         assert decision is None  # Not denied because pattern does not match exactly
         assert reason is None
@@ -36,7 +36,7 @@ class TestDeniedCommands:
             "allow_commands": [{"pattern": "git push.*"}],
         }
 
-        decision, reason = check_command("git push origin main", rules)
+        decision, reason, _ = check_command("git push origin main", rules)
 
         assert decision == "deny"
         assert reason == "No pushing"
@@ -58,19 +58,19 @@ class TestAllowedCommands:
     """Test mechanism for allowing commands. It should check for full match."""
 
     def test_exact_match(self, exact_rules):
-        decision, _ = check_command("git push", exact_rules)
+        decision, _, _ = check_command("git push", exact_rules)
         assert decision == "allow"
 
     def test_exact_no_match(self, exact_rules):
-        decision, _ = check_command("git push upstream feature", exact_rules)
+        decision, _, _ = check_command("git push upstream feature", exact_rules)
         assert decision is None
 
     def test_wildcard_match(self, wildcard_rules):
-        decision, _ = check_command("git commit -a", wildcard_rules)
+        decision, _, _ = check_command("git commit -a", wildcard_rules)
         assert decision == "allow"
 
     def test_wildcard_no_match(self, wildcard_rules):
-        decision, _ = check_command("GIT_AUTHOR=impostor git commit -a", wildcard_rules)
+        decision, _, _ = check_command("GIT_AUTHOR=impostor git commit -a", wildcard_rules)
         assert decision is None
 
 
@@ -88,7 +88,7 @@ class TestConfirmCommands:
             ]
         }
 
-        decision, reason = check_command("rm -rf /tmp/test", rules)
+        decision, reason, _ = check_command("rm -rf /tmp/test", rules)
 
         assert decision == "ask"
         assert reason == "Destructive operation"
@@ -100,7 +100,7 @@ class TestConfirmCommands:
             "confirm_commands": [{"pattern": "git push.*--force.*"}],
         }
 
-        decision, _ = check_command("git push --force", rules)
+        decision, _, _ = check_command("git push --force", rules)
 
         assert decision == "ask"
 
@@ -108,7 +108,7 @@ class TestConfirmCommands:
         """Test that unmatched command returns None."""
         rules = {"confirm_commands": [{"pattern": "rm -rf.*"}]}
 
-        decision, reason = check_command("ls -la", rules)
+        decision, reason, _ = check_command("ls -la", rules)
 
         assert decision is None
         assert reason is None
@@ -122,17 +122,17 @@ class TestPartialRules:
         rules = {"deny_commands": [{"pattern": "rm -rf", "reason": "Dangerous"}]}
 
         # Should deny matching command
-        decision, reason = check_command("rm -rf /tmp", rules)
+        decision, reason, _ = check_command("rm -rf /tmp", rules)
         assert decision == "deny"
         assert reason == "Dangerous"
 
         # Should return None for non-matching command
-        decision, reason = check_command("ls -la", rules)
+        decision, reason, _ = check_command("ls -la", rules)
         assert decision is None
         assert reason is None
 
     def test_empty_rules(self):
         """Test with completely empty rules - should return none for any command."""
-        decision, reason = check_command("any command", {})
+        decision, reason, _ = check_command("any command", {})
         assert decision is None
         assert reason is None

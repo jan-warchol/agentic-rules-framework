@@ -18,8 +18,8 @@ if __name__ == "__main__":
     except FileNotFoundError:
         sys.exit(0)
     simplified = simplify_tool_input(input_data)
-    decision, reason = process_tool_call(simplified, rules, base_dir)
-    write_log(simplified, decision, reason, rules_path)
+    decision, reason, matched_patterns = process_tool_call(simplified, rules, base_dir)
+    write_log(simplified, decision, reason, matched_patterns, rules_path)
     if decision is not None:
         output = format_decision_output(platform, decision, reason=reason)
         print(json.dumps(output))
