@@ -56,8 +56,17 @@ def detect_platform(entry, environment):
 
 def format_decision_output(platform, decision, reason=None):
     """Format a permission decision into the appropriate output structure."""
-    if platform in (VSCODE_COPILOT, CLAUDE_CODE):
-        # Both VSCode Copilot and Claude Code use the same format
+    if platform == CLAUDE_CODE:
+        output = {
+            "hookSpecificOutput": {
+                "hookEventName": "PermissionRequest",
+                "permissionDecision": decision,
+            }
+        }
+        if reason:
+            output["hookSpecificOutput"]["permissionDecisionReason"] = reason
+        return output
+    if platform == VSCODE_COPILOT:
         output = {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",

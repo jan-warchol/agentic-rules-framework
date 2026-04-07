@@ -136,7 +136,7 @@ class TestFormatting:
         """Claude Code output structure with various decisions."""
         data = format_decision_output(CLAUDE_CODE, decision, reason=reason)
         inner = data["hookSpecificOutput"]
-        assert inner["hookEventName"] == "PreToolUse"
+        assert inner["hookEventName"] == "PermissionRequest"
         assert inner["permissionDecision"] == decision
         if reason:
             assert inner["permissionDecisionReason"] == reason
