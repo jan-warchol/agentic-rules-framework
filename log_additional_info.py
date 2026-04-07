@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Interactively log manual notes alongside regular hook event data.
+"""Log manual notes alongside regular hook event data.
 
-Reads multi-line input from the terminal in a loop. Each entry is submitted
-automatically after a 100ms pause with no new input. Paste your text; it saves itself.
+Reads multi-line input from the terminal. Each entry is submitted automatically
+after a 100ms pause with no new input. Paste your text; it saves itself.
+
+Without arguments: loops, prompting for input repeatedly until Ctrl-C.
+With an argument: saves one entry (with the argument as user_comment) and exits.
 """
 
 import json
@@ -74,21 +77,21 @@ def open_tty() -> tuple[int, object, list]:
     return fd, tty_file, old_settings
 
 
-def _save_entry(log_file: Path, question: str, text: str) -> None:
+def _save_entry(log_file: Path, why: str, user_comment: str | None = None) -> None:
     entry = {
         "timestamp": int(time.time()),
         **get_session_context(log_file),
         "cwd": str(Path.cwd()),
         "event": "AdditionalInfo",
-        "question": question,
-        "answer": text,
+        "why_permission_prompt_appeared": why,
     }
+    if user_comment is not None:
+        entry["user_comment"] = user_comment
     write_entry(log_file, entry)
 
 
-def run_auto_loop(fd: int, log_file: Path, question: str) -> None:
-    """Auto-submit mode: paste text, saved after 100ms silence."""
-    prompt = "Provide additional info - " + question
+def run_loop(fd: int, log_file: Path, user_comment: str | None = None) -> None:
+    prompt = "Why the permission prompt appeared?"
     print(prompt, file=sys.stderr)
     while True:
         text = read_entry(fd)
@@ -101,42 +104,13 @@ def run_auto_loop(fd: int, log_file: Path, question: str) -> None:
             continue
 
         print(text, file=sys.stderr)
-        _save_entry(log_file, question, text)
+        _save_entry(log_file, text, user_comment)
         print("\nSaved.", file=sys.stderr)
+
+        if user_comment is not None:
+            break
+
         print(prompt, file=sys.stderr)
-
-
-def run_interactive_loop(log_file: Path, question: str) -> None:
-    """Interactive mode: type input, confirm with Enter."""
-    try:
-        tty_text = open("/dev/tty", "r")
-    except OSError:
-        print("Error: no controlling terminal found.", file=sys.stderr)
-        sys.exit(1)
-
-    prompt = "Provide additional info - " + question + "\n> "
-    try:
-        while True:
-            try:
-                print(prompt, end="", file=sys.stderr)
-                sys.stderr.flush()
-                text = tty_text.readline()
-            except KeyboardInterrupt:
-                print("\nQuitting.", file=sys.stderr)
-                break
-
-            if not text:  # EOF (Ctrl-D)
-                print("\nQuitting.", file=sys.stderr)
-                break
-
-            text = text.strip()
-            if not text:
-                continue
-
-            _save_entry(log_file, question, text)
-            print("Saved.", file=sys.stderr)
-    finally:
-        tty_text.close()
 
 
 if __name__ == "__main__":
@@ -144,14 +118,10 @@ if __name__ == "__main__":
     log_file = log_dir / LOG_FILENAME
     print(f"Logging to: {log_file}", file=sys.stderr)
 
-    if len(sys.argv) < 2:
-        question = "why the permission prompt appeared?"
-        fd, tty_file, old_settings = open_tty()
-        try:
-            run_auto_loop(fd, log_file, question)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            tty_file.close()
-    else:
-        question = sys.argv[1]
-        run_interactive_loop(log_file, question)
+    user_comment = sys.argv[1] if len(sys.argv) >= 2 else None
+    fd, tty_file, old_settings = open_tty()
+    try:
+        run_loop(fd, log_file, user_comment)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        tty_file.close()

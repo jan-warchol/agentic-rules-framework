@@ -7,7 +7,7 @@ import platformdirs
 from src.check_rules import extract_paths_from_command
 
 APP_NAME = "agentic-rules-framework"
-LOG_SUBDIR = ".claude-sessions"
+LOG_SUBDIR = ".claude-history"
 LOG_FILENAME = "permission-events.jsonl"
 
 
@@ -23,7 +23,7 @@ def _load_config() -> dict:
 def get_log_dir(cwd: str) -> Path:
     """Return directory where log files should be written.
 
-    Defaults to .claude-sessions/ in cwd; overridden by logs_base_dir in
+    Defaults to .claude-history/ in cwd; overridden by logs_base_dir in
     ~/.config/agentic-rules-framework/config.json.
     """
     config = _load_config()

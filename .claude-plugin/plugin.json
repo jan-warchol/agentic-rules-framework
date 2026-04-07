@@ -1,6 +1,6 @@
 {
   "name": "check-agent-rules",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Check if the agent's actions comply with project rules defined in agent-rules.yaml, and enforce them using hooks. Requires python and uv package manager.",
   "author": {
     "name": "Jan Warchoł",
@@ -20,16 +20,6 @@
           {
             "type": "command",
             "command": "uv run --project ${CLAUDE_PLUGIN_ROOT} ${CLAUDE_PLUGIN_ROOT}/check_agent_rules.py"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run --project ${CLAUDE_PLUGIN_ROOT} ${CLAUDE_PLUGIN_ROOT}/log_related_events.py"
           }
         ]
       }
