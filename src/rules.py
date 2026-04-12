@@ -28,9 +28,9 @@ def _merge_rules(global_rules, project_rules):
 
     Global rules are prepended so they are evaluated first.
     """
-    if not global_rules:
+    if global_rules is None:
         return project_rules
-    if not project_rules:
+    if project_rules is None:
         return global_rules
 
     merged = {}
