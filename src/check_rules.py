@@ -145,7 +145,12 @@ def extract_paths_from_command(command: str) -> list:
         tokens = shlex.split(command)
     except ValueError:
         tokens = command.split()
-    return [t for t in tokens if Path(t).exists()]
+    def _exists(t):
+        try:
+            return Path(t).exists()
+        except OSError:
+            return False
+    return [t for t in tokens if _exists(t)]
 
 
 def process_tool_call(tool_input, rules, base_dir):
